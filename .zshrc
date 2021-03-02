@@ -25,6 +25,8 @@ alias updatelocal="
     sudo apt update && \
     sudo apt -y upgrade && \
     sudo apt -y install git && \
+    sudo apt -y install unzip && \
+    sudo apt -y install python3 && \
     git clone https://github.com/tfutils/tfenv.git ~/.tfenv && \
     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && unzip awscliv2.zip && ./aws/install
 "
