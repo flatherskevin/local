@@ -68,3 +68,5 @@ alias tfrmi="(rm -rf .terraform || true) && tfi"
 tf_select_or_new() {
     tfws $1 || tfw new $1
 }
+
+source ~/.localrc 2> /dev/null
