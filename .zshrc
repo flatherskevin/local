@@ -16,14 +16,19 @@ plugins=(git)
 source $ZSH/oh-my-zsh.sh
 # source venv/bin/activate || (echo "using env/" && source env/bin/activate)
 
-alias zshconfig="code ~/.zshrc"
-alias zshtheme="code ~/.oh-my-zsh/custom/themes/kflathers.zsh-theme"
 alias cls="tput reset"
 alias awsconfig="code ~/.aws/config"
 alias awscredentials="code ~/.aws/credentials"
 alias fixcreds="ssh-add -K ~/.ssh/id_rsa && ssh-add -K ~/.ssh/id_ed25519"
-alias reload="source ~/.zshrc"
 alias codebase="cd ~/codebase"
+
+# Zsh
+alias reload="source ~/.zshrc"
+alias zshconfig="code ~/.zshrc"
+alias zshtheme="code ~/.oh-my-zsh/custom/themes/kflathers.zsh-theme"
+alias zshupdaterc="wget https://raw.githubusercontent.com/flatherskevin/local/main/.zshrc -O ~/.zshrc"
+alias zshupdatetheme="wget https://raw.githubusercontent.com/flatherskevin/local/main/kflathers.zsh-theme -O ~/.oh-my-zsh/custom/themes/kflathers.zsh-theme"
+alias zshupdate="zshupdaterc && zshupdatetheme && reload"
 
 # Git
 alias gitac="git add . && git commit -m"
@@ -58,7 +63,7 @@ alias tfd="terraform destroy"
 alias tfi="terraform init"
 alias tft="terraform taint"
 alias tfr="terraform refresh"
-alias tfrmi="(rm -rf .terraform* || true) && tfi"
+alias tfrmi="(rm -rf .terraform || true) && tfi"
 
 tf_select_or_new() {
     tfws $1 || tfw new $1
