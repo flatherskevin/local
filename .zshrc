@@ -28,15 +28,15 @@ alias updatelocal="
     sudo apt -y install unzip && \
     sudo apt -y install python3 && \
     if [ ! -d ~/.tfenv ] ; then git clone https://github.com/tfutils/tfenv.git ~/.tfenv; else git -C ~/.tfenv pull ; fi && \
-    wget "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -O "awscliv2.zip" && unzip -o awscliv2.zip && sudo ./aws/install
+    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && unzip -o awscliv2.zip && sudo ./aws/install
 "
 
 # Zsh
 alias reload="source ~/.zshrc"
 alias zshconfig="code ~/.zshrc"
 alias zshtheme="code ~/.oh-my-zsh/custom/themes/kflathers.zsh-theme"
-alias zshupdaterc="wget https://raw.githubusercontent.com/flatherskevin/local/main/.zshrc -O ~/.zshrc"
-alias zshupdatetheme="wget https://raw.githubusercontent.com/flatherskevin/local/main/kflathers.zsh-theme -O ~/.oh-my-zsh/custom/themes/kflathers.zsh-theme"
+alias zshupdaterc="curl https://raw.githubusercontent.com/flatherskevin/local/main/.zshrc -o ~/.zshrc"
+alias zshupdatetheme="curl https://raw.githubusercontent.com/flatherskevin/local/main/kflathers.zsh-theme -o ~/.oh-my-zsh/custom/themes/kflathers.zsh-theme"
 alias zshupdate="zshupdaterc && zshupdatetheme && reload"
 
 # Git
