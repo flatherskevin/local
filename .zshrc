@@ -43,7 +43,7 @@ function update_os() {
 }
 
 alias updatelocal="
-    update_os
+    update_os && \
     os_package_manager -y install git && \
     os_package_manager -y install unzip && \
     os_package_manager -y install python3 && \
