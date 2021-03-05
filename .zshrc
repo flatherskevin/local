@@ -43,13 +43,23 @@ function update_os() {
     fi
 }
 
+function install_aws_cli() {
+    if [ "$OSTYPE" -eq "darwin" ]
+    then
+        curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg" && sudo installer -pkg AWSCLIV2.pkg -target /
+    elif [ "$OSTYPE" -eq "linux-gnu" ]
+    then
+        curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip && unzip -o awscliv2.zip && sudo ./aws/install 
+    fi
+}
+
 alias updatelocal="
     update_os && \
     os_package_manager install git && \
     os_package_manager install unzip && \
     os_package_manager install python3 && \
     if [ ! -d ~/.tfenv ] ; then git clone https://github.com/tfutils/tfenv.git ~/.tfenv; else git -C ~/.tfenv pull ; fi && \
-    curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip && unzip -o awscliv2.zip && sudo ./aws/install
+    install_aws_cli
 "
 
 # Zsh
