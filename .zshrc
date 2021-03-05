@@ -23,41 +23,41 @@ alias fixcreds="ssh-add -K ~/.ssh/id_rsa && ssh-add -K ~/.ssh/id_ed25519"
 alias codebase="cd ~/codebase"
 alias localconfig="code ~/.localrc"
 
-function os_package_manager() {
-    if [ "$OSTYPE" -eq "darwin" ]
+function os_install_package() {
+    if [[ "$OSTYPE" = "darwin"* ]]
     then
-        sudo brew $@
-    elif [ "$OSTYPE" -eq "linux-gnu" ]
+        brew install $@ || brew upgrade $@
+    elif [[ "$OSTYPE" = "linux-gnu"* ]]
     then
-        sudo apt -y $@
+        sudo apt -y install $@
     fi
 }
 
-function update_os() {
-    if [ "$OSTYPE" -eq "darwin" ]
+function os_update() {
+    if [[ "$OSTYPE" = "darwin"* ]]
     then
-        os_package_manager update && os_package_manager upgrade 
-    elif [ "$OSTYPE" -eq "linux-gnu" ]
+        os_install_package update && os_install_package upgrade 
+    elif [[ "$OSTYPE" = "linux-gnu"* ]]
     then
-        os_package_manager update && os_package_manager -y upgrade 
+        os_install_package update && os_install_package -y upgrade 
     fi
 }
 
-function install_aws_cli() {
-    if [ "$OSTYPE" -eq "darwin" ]
+function os_install_aws_cli() {
+    if [[ "$OSTYPE" = "darwin"* ]]
     then
         curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg" && sudo installer -pkg AWSCLIV2.pkg -target /
-    elif [ "$OSTYPE" -eq "linux-gnu" ]
+    elif [[ "$OSTYPE" = "linux-gnu"* ]]
     then
         curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip && unzip -o awscliv2.zip && sudo ./aws/install 
     fi
 }
 
 alias updatelocal="
-    update_os && \
-    os_package_manager install git && \
-    os_package_manager install unzip && \
-    os_package_manager install python3 && \
+    
+    os_install_package git && \
+    os_install_package unzip && \
+    os_install_package python3 && \
     if [ ! -d ~/.tfenv ] ; then git clone https://github.com/tfutils/tfenv.git ~/.tfenv; else git -C ~/.tfenv pull ; fi && \
     install_aws_cli
 "
