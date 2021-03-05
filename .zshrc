@@ -59,7 +59,7 @@ alias updatelocal="
     os_install_package unzip && \
     os_install_package python3 && \
     if [ ! -d ~/.tfenv ] ; then git clone https://github.com/tfutils/tfenv.git ~/.tfenv; else git -C ~/.tfenv pull ; fi && \
-    install_aws_cli
+    os_install_aws_cli
 "
 
 # Zsh
