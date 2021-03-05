@@ -21,22 +21,23 @@ alias awsconfig="code ~/.aws/config"
 alias awscredentials="code ~/.aws/credentials"
 alias fixcreds="ssh-add -K ~/.ssh/id_rsa && ssh-add -K ~/.ssh/id_ed25519"
 alias codebase="cd ~/codebase"
+alias localconfig="code ~/.localrc"
 
 function os_package_manager() {
-    if [ "$OSTYPE" == "darwin" ]
+    if [ "$OSTYPE" -eq "darwin" ]
     then
         sudo brew $@
-    elif [ "$OSTYPE" == "linux-gnu" ]
+    elif [ "$OSTYPE" -eq "linux-gnu" ]
     then
         sudo apt -y $@
     fi
 }
 
 function update_os() {
-    if [ "$OSTYPE" == "darwin" ]
+    if [ "$OSTYPE" -eq "darwin" ]
     then
         os_package_manager update && os_package_manager upgrade 
-    elif [ "$OSTYPE" == "linux-gnu" ]
+    elif [ "$OSTYPE" -eq "linux-gnu" ]
     then
         os_package_manager update && os_package_manager -y upgrade 
     fi
@@ -44,9 +45,9 @@ function update_os() {
 
 alias updatelocal="
     update_os && \
-    os_package_manager -y install git && \
-    os_package_manager -y install unzip && \
-    os_package_manager -y install python3 && \
+    os_package_manager install git && \
+    os_package_manager install unzip && \
+    os_package_manager install python3 && \
     if [ ! -d ~/.tfenv ] ; then git clone https://github.com/tfutils/tfenv.git ~/.tfenv; else git -C ~/.tfenv pull ; fi && \
     curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip && unzip -o awscliv2.zip && sudo ./aws/install
 "
