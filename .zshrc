@@ -67,7 +67,7 @@ alias reload="source ~/.zshrc"
 alias zshconfig="code ~/.zshrc"
 alias zshtheme="code ~/.oh-my-zsh/custom/themes/kflathers.zsh-theme"
 alias zshupdaterc="curl https://raw.githubusercontent.com/flatherskevin/local/main/.zshrc -o ~/.zshrc"
-alias zshupdatetheme="curl https://raw.githubusercontent.com/flatherskevin/local/main/kflathers.zsh-theme -o ~/.oh-my-zsh/custom/themes/kflathers.zsh-theme"
+alias zshupdatetheme="curl https://raw.githubusercontent.com/flatherskevin/local/main/flatherskevin.zsh-theme -o ~/.oh-my-zsh/custom/themes/flatherskevin.zsh-theme"
 alias zshupdate="zshupdaterc && zshupdatetheme && reload"
 
 # Git
