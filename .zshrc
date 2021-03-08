@@ -54,7 +54,7 @@ function os_install_aws_cli() {
 }
 
 alias updatelocal="
-    
+    os_update
     os_install_package git && \
     os_install_package unzip && \
     os_install_package python3 && \
