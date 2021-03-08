@@ -36,10 +36,10 @@ function os_install_package() {
 function os_update() {
     if [[ "$OSTYPE" = "darwin"* ]]
     then
-        os_install_package update && os_install_package upgrade 
+        brew update && brew upgradee 
     elif [[ "$OSTYPE" = "linux-gnu"* ]]
     then
-        os_install_package update && os_install_package -y upgrade 
+        sudo apt update && sudo apt -y upgrade  
     fi
 }
 
