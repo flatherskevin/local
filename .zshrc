@@ -9,7 +9,7 @@ export ZSH="$HOME/.oh-my-zsh"
 export EDITOR="code -w"
 export PAGER=
 
-ZSH_THEME="kflathers"
+ZSH_THEME="flatherskevin"
 
 plugins=(git)
 
