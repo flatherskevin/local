@@ -3,6 +3,7 @@ ZSH_DISABLE_COMPFIX="true"
 export PATH=$HOME/.local/bin:$PATH
 export PATH=$HOME/Library/Python/3.8/bin:$PATH
 export PATH=/usr/local/git/bin:$PATH
+export PATH=$HOME/.tfenv/bin:$PATH
 
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
