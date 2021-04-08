@@ -36,6 +36,7 @@ function os_install_package() {
 function os_update() {
     if [[ "$OSTYPE" = "darwin"* ]]
     then
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
         brew update && brew upgrade
     elif [[ "$OSTYPE" = "linux-gnu"* ]]
     then
