@@ -111,3 +111,7 @@ tf_select_or_new() {
 }
 
 source ~/.localrc 2> /dev/null
+
+# Golang
+alias gotest="go test -gcflags=all=-l"
+alias gotestcov="gotest -coverprofile=coverage.out && go tool cover -html=coverage.out"
