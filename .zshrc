@@ -40,7 +40,7 @@ function os_update() {
         brew update && brew upgrade
     elif [[ "$OSTYPE" = "linux-gnu"* ]]
     then
-        sudo apt update && sudo apt -y upgrade  
+        sudo apt update && sudo apt -y upgrade
     fi
 }
 
@@ -54,11 +54,22 @@ function os_install_aws_cli() {
     fi
 }
 
+function os_install_python() {
+    if [[ "$OSTYPE" = "darwin"* ]]
+    then
+        os_install_package python3
+    elif [[ "$OSTYPE" = "linux-gnu"* ]]
+    then
+        os_install_package python3-pip
+    fi
+}
+
 alias updatelocal="
     os_update
     os_install_package git && \
     os_install_package unzip && \
-    os_install_package python3 && \
+    os_install_python && \
+    pip3 install virtualenv && \
     if [ ! -d ~/.tfenv ] ; then git clone https://github.com/tfutils/tfenv.git ~/.tfenv; else git -C ~/.tfenv pull ; fi && \
     os_install_aws_cli
 "
@@ -66,7 +77,7 @@ alias updatelocal="
 # Zsh
 alias reload="source ~/.zshrc"
 alias zshconfig="code ~/.zshrc"
-alias zshtheme="code ~/.oh-my-zsh/custom/themes/kflathers.zsh-theme"
+alias zshtheme="code ~/.oh-my-zsh/custom/themes/flatherskevin.zsh-theme"
 alias zshupdaterc="curl https://raw.githubusercontent.com/flatherskevin/local/main/.zshrc -o ~/.zshrc"
 alias zshupdatetheme="curl https://raw.githubusercontent.com/flatherskevin/local/main/flatherskevin.zsh-theme -o ~/.oh-my-zsh/custom/themes/flatherskevin.zsh-theme"
 alias zshupdate="zshupdaterc && zshupdatetheme && reload"
@@ -85,12 +96,12 @@ alias gitrebimain="gitmainp && git checkout - && git rebase -i main"
 alias gitc="git checkout"
 
 # Python
-alias pyenv="source venv/bin/activate"
-alias pyenvcreate="python3 -m virtualenv venv"
-alias pyi="pip install -r requirements.txt"
-alias pyfreeze="pip freeze > requirements.txt"
+alias venvactivate="source venv/bin/activate"
+alias venvcreate="python3 -m virtualenv venv"
 alias venvpytest="./venv/bin/pytest --cache-clear"
 alias venvpytestcov="./venv/bin/pytest --cache-clear --cov=nebula_utils --cov-report term-missing"
+alias pyi="pip install -r requirements.txt"
+alias pyfreeze="pip freeze > requirements.txt"
 
 # Terraform
 alias tf="terraform"
