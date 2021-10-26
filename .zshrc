@@ -10,6 +10,10 @@ export ZSH="$HOME/.oh-my-zsh"
 export EDITOR="code -w"
 export PAGER=
 
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+
 ZSH_THEME="flatherskevin"
 
 plugins=(git)
@@ -100,7 +104,7 @@ alias venvactivate="source venv/bin/activate"
 alias venvcreate="python3 -m virtualenv venv"
 alias venvpytest="./venv/bin/pytest --cache-clear"
 alias venvpytestcov="./venv/bin/pytest --cache-clear --cov=nebula_utils --cov-report term-missing"
-alias pyi="pip install -r requirements.txt"
+alias pyi="pip install -r requirements.txt -U"
 alias pyfreeze="pip freeze > requirements.txt"
 
 # Terraform
@@ -124,5 +128,15 @@ tf_select_or_new() {
 source ~/.localrc 2> /dev/null
 
 # Golang
-alias gotest="go test -gcflags=all=-l"
+alias gotest="go test -gcflags=all=-l ./..."
 alias gotestcov="gotest -coverprofile=coverage.out && go tool cover -html=coverage.out"
+
+# NVM
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+# Docker
+alias dockerkill="docker kill \$(docker ps -a --format \" {{.ID}}\")"
+alias dockerrm="docker rm $(docker ps -a -q)"
+alias dockerkr="dockerkill && dockerrm"
