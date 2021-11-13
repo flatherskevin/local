@@ -5,9 +5,16 @@ export PATH=$HOME/Library/Python/3.8/bin:$PATH
 export PATH=/usr/local/git/bin:$PATH
 export PATH=$HOME/.tfenv/bin:$PATH
 
+if ! command -v code &> /dev/null
+then
+    alias code="nano"
+    export EDITOR="nano"
+else
+    export EDITOR="code -w"
+fi
+
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
-export EDITOR="code -w"
 export PAGER=
 
 export NVM_DIR="$HOME/.nvm"
