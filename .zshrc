@@ -61,7 +61,7 @@ function os_install_aws_cli() {
         curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o $HOME/AWSCLIV2.pkg && sudo installer -pkg $HOME/AWSCLIV2.pkg -target /
     elif [[ "$OSTYPE" = "linux-gnu"* ]]
     then
-        curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o $HOME/awscliv2.zip && unzip $HOME/awscliv2.zip -d $HOME/aws/ && sudo $HOME/aws/install --update
+        curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o $HOME/awscliv2.zip && unzip $HOME/awscliv2.zip -d $HOME/aws/ && (sudo $HOME/aws/install --update || sudo $HOME/aws/aws/install --update)
     fi
 }
 
