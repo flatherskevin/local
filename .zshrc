@@ -1,13 +1,19 @@
 ZSH_DISABLE_COMPFIX="true"
-# If you come from bash you might have to change your $PATH.
 export PATH=$HOME/.local/bin:$PATH
 export PATH=$HOME/Library/Python/3.8/bin:$PATH
 export PATH=/usr/local/git/bin:$PATH
 export PATH=$HOME/.tfenv/bin:$PATH
 
+if ! command -v code &> /dev/null
+then
+    alias code="nano"
+    export EDITOR="nano"
+else
+    export EDITOR="code -w"
+fi
+
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
-export EDITOR="code -w"
 export PAGER=
 
 export NVM_DIR="$HOME/.nvm"
@@ -51,6 +57,9 @@ function os_install_aws_cli() {
     if [[ "$OSTYPE" = "darwin"* ]]
     then
         curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o $HOME/AWSCLIV2.pkg && sudo installer -pkg $HOME/AWSCLIV2.pkg -target /
+    elif [[ "$OSTYPE" = "linux-gnueabihf"* ]]
+    then
+        pip install git+git://github.com/aws/aws-cli.git@2.3.6
     elif [[ "$OSTYPE" = "linux-gnu"* ]]
     then
         curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o $HOME/awscliv2.zip && unzip $HOME/awscliv2.zip -d $HOME/aws/ && sudo $HOME/aws/install --update
@@ -138,8 +147,8 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
-# Docker
-alias dockerkill="docker kill \$(docker ps -a --format \" {{.ID}}\")"
-alias dockerrm="docker rm $(docker ps -a -q)"
-alias dockerrmi="docker rmi $(docker image ls -qa)"
-alias dockerkri="dockerkill && dockerrm && dockerrmi"
+# Docker (Optional)
+# alias dockerkill="docker kill \$(docker ps -a --format \" {{.ID}}\")"
+# alias dockerrm="docker rm $(docker ps -a -q)"
+# alias dockerrmi="docker rmi $(docker image ls -qa)"
+# alias dockerkri="dockerkill && dockerrm && dockerrmi"
