@@ -5,16 +5,9 @@ export PATH=$HOME/Library/Python/3.8/bin:$PATH
 export PATH=/usr/local/git/bin:$PATH
 export PATH=$HOME/.tfenv/bin:$PATH
 
-if ! command -v code &> /dev/null
-then
-    alias code="nano"
-    export EDITOR="nano"
-else
-    export EDITOR="code -w"
-fi
-
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
+export EDITOR="code -w"
 export PAGER=
 
 export NVM_DIR="$HOME/.nvm"
@@ -26,7 +19,6 @@ ZSH_THEME="flatherskevin"
 plugins=(git)
 
 source $ZSH/oh-my-zsh.sh
-# source venv/bin/activate || (echo "using env/" && source env/bin/activate)
 
 alias cls="tput reset"
 alias awsconfig="code ~/.aws/config"
@@ -59,9 +51,6 @@ function os_install_aws_cli() {
     if [[ "$OSTYPE" = "darwin"* ]]
     then
         curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o $HOME/AWSCLIV2.pkg && sudo installer -pkg $HOME/AWSCLIV2.pkg -target /
-    elif [[ "$OSTYPE" = "linux-gnueabihf"* ]]
-    then
-        pip install git+git://github.com/aws/aws-cli.git@2.3.6
     elif [[ "$OSTYPE" = "linux-gnu"* ]]
     then
         curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o $HOME/awscliv2.zip && unzip $HOME/awscliv2.zip -d $HOME/aws/ && sudo $HOME/aws/install --update
@@ -107,13 +96,16 @@ alias gitrebmaster="gitmasterp && git checkout - && git rebase master"
 alias gitrebmain="gitmainp && git checkout - && git rebase main"
 alias gitrebimaster="gitmasterp && git checkout - && git rebase -i master"
 alias gitrebimain="gitmainp && git checkout - && git rebase -i main"
+alias gitreba="git rebase --abort"
+alias gitrebc="git rebase --continue"
 alias gitc="git checkout"
 
 # Python
-alias venvactivate="source venv/bin/activate"
+alias venvactivate="source .venv/bin/activate || source venv/bin/activate || echo \"\""
+venvactivate
 alias venvcreate="python3 -m virtualenv venv"
-alias venvpytest="./venv/bin/pytest --cache-clear"
-alias venvpytestcov="./venv/bin/pytest --cache-clear --cov=nebula_utils --cov-report term-missing"
+alias venvpytest="./.venv/bin/pytest --cache-clear"
+alias venvpytestcov="./.venv/bin/pytest --cache-clear --cov=nebula_utils --cov-report term-missing"
 alias pyi="pip install -r requirements.txt -U"
 alias pyfreeze="pip freeze > requirements.txt"
 
@@ -146,7 +138,8 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
-# Docker (optional)
-#alias dockerkill="docker kill \$(docker ps -a --format \" {{.ID}}\")"
-#alias dockerrm="docker rm $(docker ps -a -q)"
-#alias dockerkr="dockerkill && dockerrm"
+# Docker
+alias dockerkill="docker kill \$(docker ps -a --format \" {{.ID}}\")"
+alias dockerrm="docker rm $(docker ps -a -q)"
+alias dockerrmi="docker rmi $(docker image ls -qa)"
+alias dockerkri="dockerkill && dockerrm && dockerrmi"
