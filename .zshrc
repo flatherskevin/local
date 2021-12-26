@@ -1,5 +1,4 @@
 ZSH_DISABLE_COMPFIX="true"
-# If you come from bash you might have to change your $PATH.
 export PATH=$HOME/.local/bin:$PATH
 export PATH=$HOME/Library/Python/3.8/bin:$PATH
 export PATH=/usr/local/git/bin:$PATH
@@ -26,7 +25,6 @@ ZSH_THEME="flatherskevin"
 plugins=(git)
 
 source $ZSH/oh-my-zsh.sh
-# source venv/bin/activate || (echo "using env/" && source env/bin/activate)
 
 alias cls="tput reset"
 alias awsconfig="code ~/.aws/config"
@@ -107,13 +105,16 @@ alias gitrebmaster="gitmasterp && git checkout - && git rebase master"
 alias gitrebmain="gitmainp && git checkout - && git rebase main"
 alias gitrebimaster="gitmasterp && git checkout - && git rebase -i master"
 alias gitrebimain="gitmainp && git checkout - && git rebase -i main"
+alias gitreba="git rebase --abort"
+alias gitrebc="git rebase --continue"
 alias gitc="git checkout"
 
 # Python
-alias venvactivate="source venv/bin/activate"
+alias venvactivate="source .venv/bin/activate || source venv/bin/activate || echo \"\""
+venvactivate
 alias venvcreate="python3 -m virtualenv venv"
-alias venvpytest="./venv/bin/pytest --cache-clear"
-alias venvpytestcov="./venv/bin/pytest --cache-clear --cov=nebula_utils --cov-report term-missing"
+alias venvpytest="./.venv/bin/pytest --cache-clear"
+alias venvpytestcov="./.venv/bin/pytest --cache-clear --cov=nebula_utils --cov-report term-missing"
 alias pyi="pip install -r requirements.txt -U"
 alias pyfreeze="pip freeze > requirements.txt"
 
@@ -146,7 +147,8 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
-# Docker (optional)
-#alias dockerkill="docker kill \$(docker ps -a --format \" {{.ID}}\")"
-#alias dockerrm="docker rm $(docker ps -a -q)"
-#alias dockerkr="dockerkill && dockerrm"
+# Docker (Optional)
+# alias dockerkill="docker kill \$(docker ps -a --format \" {{.ID}}\")"
+# alias dockerrm="docker rm $(docker ps -a -q)"
+# alias dockerrmi="docker rmi $(docker image ls -qa)"
+# alias dockerkri="dockerkill && dockerrm && dockerrmi"
