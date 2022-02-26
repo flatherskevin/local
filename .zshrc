@@ -1,8 +1,14 @@
 ZSH_DISABLE_COMPFIX="true"
-export PATH=$HOME/.local/bin:$PATH
-export PATH=$HOME/Library/Python/3.8/bin:$PATH
+
+# Pyenv
+export PATH=$HOME/.pyenv/shims:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH
+export PYENV_SHELL="zsh"
+if which pyenv > /dev/null; then eval "$(pyenv init - zsh)"; fi
+
+export PYENV_VERSION="3.9.9"
 export PATH=/usr/local/git/bin:$PATH
 export PATH=$HOME/.tfenv/bin:$PATH
+
 
 if ! command -v code &> /dev/null
 then
@@ -112,7 +118,7 @@ alias gitc="git checkout"
 # Python
 alias venvactivate="source .venv/bin/activate || source venv/bin/activate || echo \"\""
 venvactivate
-alias venvcreate="python3 -m virtualenv venv"
+alias venvcreate="python3 -m virtualenv ./.venv"
 alias venvpytest="./.venv/bin/pytest --cache-clear"
 alias venvpytestcov="./.venv/bin/pytest --cache-clear --cov=nebula_utils --cov-report term-missing"
 alias pyi="pip install -r requirements.txt -U"
@@ -152,3 +158,5 @@ export NVM_DIR="$HOME/.nvm"
 # alias dockerrm="docker rm $(docker ps -a -q)"
 # alias dockerrmi="docker rmi $(docker image ls -qa)"
 # alias dockerkri="dockerkill && dockerrm && dockerrmi"
+
+export PATH=$HOME/.local/bin:$PATH
