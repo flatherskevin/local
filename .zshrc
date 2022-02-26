@@ -1,11 +1,12 @@
 ZSH_DISABLE_COMPFIX="true"
 
 # Pyenv
-export PATH=$HOME/.pyenv/shims:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH=$HOME/.pyenv/shims:$PYENV_ROOT/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH
 export PYENV_SHELL="zsh"
 if which pyenv > /dev/null; then eval "$(pyenv init - zsh)"; fi
 
-export PYENV_VERSION="3.9.9"
+export PYENV_VERSION="3.9.10"
 export PATH=/usr/local/git/bin:$PATH
 export PATH=$HOME/.tfenv/bin:$PATH
 
