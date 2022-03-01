@@ -118,7 +118,7 @@ alias gitrebc="git rebase --continue"
 alias gitc="git checkout"
 
 # Python
-alias venvactivate="source .venv/bin/activate || source venv/bin/activate"
+alias venvactivate="source .venv/bin/activate || source venv/bin/activate || echo \"\""
 venvactivate
 alias venvcreate="python3 -m virtualenv ./.venv"
 alias venvpytest="./.venv/bin/pytest --cache-clear"
@@ -162,4 +162,3 @@ export NVM_DIR="$HOME/.nvm"
 # alias dockerkri="dockerkill && dockerrm && dockerrmi"
 
 export PATH=$HOME/.local/bin:$PATH
-export PATH="$HOME/.poetry/bin:$PATH"
