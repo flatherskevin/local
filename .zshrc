@@ -9,7 +9,7 @@ export PYENV_VERSION="3.9.10"
 export PATH=/usr/local/git/bin:$PATH
 export PATH=$HOME/.tfenv/bin:$PATH
 
-source $HOME/.poetry/env
+source $HOME/.poetry/env || echo "poetry not installed"
 
 if ! command -v code &> /dev/null
 then
