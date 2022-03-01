@@ -79,7 +79,7 @@ function os_install_python() {
     then
         os_install_package libssl-dev
     fi
-    $HOME/.pyenv/bin/penv install 3.9.10
+    $HOME/.pyenv/bin/pyenv install 3.9.10
     curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
     pip install virtualenv
 }
