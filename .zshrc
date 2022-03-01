@@ -2,14 +2,14 @@ ZSH_DISABLE_COMPFIX="true"
 
 # Pyenv
 export PYENV_ROOT="$HOME/.pyenv"
-export PATH=$HOME/.pyenv/shims:$PYENV_ROOT/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH
+export PATH=$PYENV_ROOT/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH
 export PYENV_SHELL="zsh"
-if which pyenv > /dev/null; then eval "$(pyenv init - zsh)"; fi
-
+if which pyenv > /dev/null; then eval "$(pyenv init -)"; fi
 export PYENV_VERSION="3.9.10"
 export PATH=/usr/local/git/bin:$PATH
 export PATH=$HOME/.tfenv/bin:$PATH
 
+source $HOME/.poetry/env
 
 if ! command -v code &> /dev/null
 then
@@ -74,13 +74,14 @@ function os_install_aws_cli() {
 }
 
 function os_install_python() {
-    if [[ "$OSTYPE" = "darwin"* ]]
+    git clone https://github.com/pyenv/pyenv.git ~/.pyenv
+    if [[ "$OSTYPE" = "linux-gnu"* ]]
     then
-        os_install_package python3
-    elif [[ "$OSTYPE" = "linux-gnu"* ]]
-    then
-        os_install_package python3-pip
+        os_install_package libssl-dev
     fi
+    $HOME/.pyenv/bin/penv install 3.9.10
+    curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
+    pip install virtualenv
 }
 
 alias updatelocal="
@@ -117,7 +118,7 @@ alias gitrebc="git rebase --continue"
 alias gitc="git checkout"
 
 # Python
-alias venvactivate="source .venv/bin/activate || source venv/bin/activate || echo \"\""
+alias venvactivate="source .venv/bin/activate || source venv/bin/activate"
 venvactivate
 alias venvcreate="python3 -m virtualenv ./.venv"
 alias venvpytest="./.venv/bin/pytest --cache-clear"
@@ -161,3 +162,4 @@ export NVM_DIR="$HOME/.nvm"
 # alias dockerkri="dockerkill && dockerrm && dockerrmi"
 
 export PATH=$HOME/.local/bin:$PATH
+export PATH="$HOME/.poetry/bin:$PATH"
