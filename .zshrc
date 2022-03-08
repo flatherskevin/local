@@ -122,9 +122,13 @@ alias venvactivate="source .venv/bin/activate || source venv/bin/activate || ech
 venvactivate
 alias venvcreate="python3 -m virtualenv ./.venv"
 alias venvpytest="./.venv/bin/pytest --cache-clear"
-alias venvpytestcov="./.venv/bin/pytest --cache-clear --cov=nebula_utils --cov-report term-missing"
+alias venvpytestcov="pytest_coverage"
 alias pyi="pip install -r requirements.txt -U"
 alias pyfreeze="pip freeze > requirements.txt"
+
+pytest_coverage(){
+    venvpytest --cov=$1 --cov-report term-missing
+}
 
 # Terraform
 alias tf="terraform"
@@ -156,9 +160,9 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
 # Docker (Optional)
-# alias dockerkill="docker kill \$(docker ps -a --format \" {{.ID}}\")"
-# alias dockerrm="docker rm $(docker ps -a -q)"
-# alias dockerrmi="docker rmi $(docker image ls -qa)"
-# alias dockerkri="dockerkill && dockerrm && dockerrmi"
+alias dockerkill="docker kill \$(docker ps -a --format \" {{.ID}}\")"
+alias dockerrm="docker rm $(docker ps -a -q)"
+alias dockerrmi="docker rmi $(docker image ls -qa)"
+alias dockerkri="dockerkill && dockerrm && dockerrmi"
 
 export PATH=$HOME/.local/bin:$PATH
