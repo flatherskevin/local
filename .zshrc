@@ -160,9 +160,9 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
 # Docker (Optional)
-alias dockerkill="docker kill $(docker ps -a --format ' {{.ID}}')"
-alias dockerrm="docker rm $(docker ps -a -q)"
-alias dockerrmi="docker rmi $(docker image ls -qa)"
+alias dockerkill="docker kill $(docker ps -a --format ' {{.ID}}') || echo 'No containers to kill' "
+alias dockerrm="docker rm $(docker ps -a -q) || echo 'No containers to delete'"
+alias dockerrmi="docker rmi \$(docker image ls -qa) -f || echo 'No images to delete'"
 alias dockerkri="dockerkill && dockerrm && dockerrmi"
 
 export PATH=$HOME/.local/bin:$PATH
