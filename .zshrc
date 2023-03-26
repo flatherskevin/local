@@ -2,7 +2,7 @@ ZSH_DISABLE_COMPFIX="true"
 
 # Pyenv
 export PYENV_ROOT="$HOME/.pyenv"
-export PATH=$PYENV_ROOT/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH
+export PATH=$PYENV_ROOT/shims:$PYENV_ROOT/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH
 export PYENV_SHELL="zsh"
 if which pyenv > /dev/null; then eval "$(pyenv init -)"; fi
 export PYENV_VERSION="3.9.10"
