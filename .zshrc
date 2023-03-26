@@ -5,7 +5,7 @@ export PYENV_ROOT="$HOME/.pyenv"
 export PATH=$PYENV_ROOT/shims:$PYENV_ROOT/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH
 export PYENV_SHELL="zsh"
 if which pyenv > /dev/null; then eval "$(pyenv init -)"; fi
-export PYENV_VERSION="3.9.10"
+export PYENV_VERSION="3.11.2"
 export PATH=/usr/local/git/bin:$PATH
 export PATH=$HOME/.tfenv/bin:$PATH
 
@@ -34,11 +34,11 @@ plugins=(git)
 source $ZSH/oh-my-zsh.sh
 
 alias cls="tput reset"
-alias awsconfig="code ~/.aws/config"
-alias awscredentials="code ~/.aws/credentials"
-alias fixcreds="ssh-add -K ~/.ssh/id_rsa && ssh-add -K ~/.ssh/id_ed25519"
-alias codebase="cd ~/codebase"
-alias localconfig="code ~/.localrc"
+alias awsconfig="code $HOME/.aws/config"
+alias awscredentials="code $HOME/.aws/credentials"
+alias fixcreds="ssh-add -K $HOME/.ssh/id_rsa && ssh-add -K $HOME/.ssh/id_ed25519"
+alias codebase="cd $HOME/codebase"
+alias localconfig="code $HOME/.localrc"
 
 function os_install_package() {
     if [[ "$OSTYPE" = "darwin"* ]]
@@ -74,12 +74,13 @@ function os_install_aws_cli() {
 }
 
 function os_install_python() {
-    git clone https://github.com/pyenv/pyenv.git ~/.pyenv
+    git clone https://github.com/pyenv/pyenv.git $PYENV_ROOT
+    git -C $PYENV_ROOT pull
     if [[ "$OSTYPE" = "linux-gnu"* ]]
     then
         os_install_package libssl-dev
     fi
-    $HOME/.pyenv/bin/pyenv install 3.11.2
+    $PYENV_ROOT/bin/pyenv install $PYENV_VERSION
     curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
     pip install virtualenv
 }
@@ -90,16 +91,16 @@ alias updatelocal="
     os_install_package unzip && \
     os_install_python && \
     pip3 install virtualenv && \
-    if [ ! -d ~/.tfenv ] ; then git clone https://github.com/tfutils/tfenv.git ~/.tfenv; else git -C ~/.tfenv pull ; fi && \
+    if [ ! -d $HOME/.tfenv ] ; then git clone https://github.com/tfutils/tfenv.git $HOME/.tfenv; else git -C $HOME/.tfenv pull ; fi && \
     os_install_aws_cli
 "
 
 # Zsh
-alias reload="source ~/.zshrc"
-alias zshconfig="code ~/.zshrc"
-alias zshtheme="code ~/.oh-my-zsh/custom/themes/flatherskevin.zsh-theme"
-alias zshupdaterc="curl https://raw.githubusercontent.com/flatherskevin/local/main/.zshrc -o ~/.zshrc"
-alias zshupdatetheme="curl https://raw.githubusercontent.com/flatherskevin/local/main/flatherskevin.zsh-theme -o ~/.oh-my-zsh/custom/themes/flatherskevin.zsh-theme"
+alias reload="source $HOME/.zshrc"
+alias zshconfig="code $HOME/.zshrc"
+alias zshtheme="code $HOME/.oh-my-zsh/custom/themes/flatherskevin.zsh-theme"
+alias zshupdaterc="curl https://raw.githubusercontent.com/flatherskevin/local/main/.zshrc -o $HOME/.zshrc"
+alias zshupdatetheme="curl https://raw.githubusercontent.com/flatherskevin/local/main/flatherskevin.zsh-theme -o $HOME/.oh-my-zsh/custom/themes/flatherskevin.zsh-theme"
 alias zshupdate="zshupdaterc && zshupdatetheme && reload"
 
 # Git
@@ -148,7 +149,7 @@ tf_select_or_new() {
     tfws $1 || tfw new $1
 }
 
-source ~/.localrc 2> /dev/null
+source $HOME/.localrc 2> /dev/null
 
 # Golang
 alias gotest="go test -gcflags=all=-l ./..."
