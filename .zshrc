@@ -95,7 +95,7 @@ alias updatelocal="
     os_update
     os_install_package git && \
     os_install_package unzip && \
-    /bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\" && \
+    /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\" && \
     os_install_python && \
     pip3 install virtualenv && \
     install_nodejs && \
