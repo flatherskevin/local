@@ -8,6 +8,8 @@ if which pyenv > /dev/null; then eval "$(pyenv init -)"; fi
 export PYENV_VERSION="3.11.2"
 export PATH=/usr/local/git/bin:$PATH
 export PATH=$HOME/.tfenv/bin:$PATH
+export PATH=./node_modules/.bin:$PATH
+export PATH=$HOME/linuxbrew/.linuxbrew/bin/brew:$PATH
 
 source $HOME/.poetry/env || echo "poetry not installed"
 
@@ -93,6 +95,7 @@ alias updatelocal="
     os_update
     os_install_package git && \
     os_install_package unzip && \
+    /bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\" && \
     os_install_python && \
     pip3 install virtualenv && \
     install_nodejs && \
