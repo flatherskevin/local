@@ -22,11 +22,6 @@ fi
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
 export PAGER=
-
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-
 ZSH_THEME="flatherskevin"
 
 plugins=(git)
@@ -85,12 +80,22 @@ function os_install_python() {
     pip install virtualenv
 }
 
+function install_nodejs() {
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+    nvm install 18.15.0
+    npm i -g corepack
+}
+
 alias updatelocal="
     os_update
     os_install_package git && \
     os_install_package unzip && \
     os_install_python && \
     pip3 install virtualenv && \
+    install_nodejs && \
     if [ ! -d $HOME/.tfenv ] ; then git clone https://github.com/tfutils/tfenv.git $HOME/.tfenv; else git -C $HOME/.tfenv pull ; fi && \
     os_install_aws_cli
 "
