@@ -5,13 +5,12 @@ export PYENV_ROOT="$HOME/.pyenv"
 export PATH=$PYENV_ROOT/shims:$PYENV_ROOT/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH
 export PYENV_SHELL="zsh"
 if which pyenv > /dev/null; then eval "$(pyenv init -)"; fi
-export PYENV_VERSION="3.11.2"
 export PATH=/usr/local/git/bin:$PATH
 export PATH=$HOME/.tfenv/bin:$PATH
 export PATH=./node_modules/.bin:$PATH
 export PATH=$HOME/linuxbrew/.linuxbrew/bin/brew:$PATH
 
-source $HOME/.poetry/env || echo "poetry not installed"
+source $HOME/.poetry/env &> /dev/null || true
 
 if ! command -v code &> /dev/null
 then
@@ -127,7 +126,7 @@ alias gitrebc="git rebase --continue"
 alias gitc="git checkout"
 
 # Python
-alias venvactivate="source .venv/bin/activate || source venv/bin/activate || echo \"\""
+alias venvactivate="source .venv/bin/activate &> /dev/null || source venv/bin/activate &> /dev/null || true"
 venvactivate
 alias venvcreate="python3 -m virtualenv ./.venv"
 alias venvpytest="./.venv/bin/pytest --cache-clear"
