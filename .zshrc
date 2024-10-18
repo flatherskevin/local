@@ -12,13 +12,7 @@ export PATH=$HOME/linuxbrew/.linuxbrew/bin/brew:$PATH
 
 source $HOME/.poetry/env &> /dev/null || true
 
-if ! command -v code &> /dev/null
-then
-    alias code="nano"
-    export EDITOR="nano"
-else
-    export EDITOR="code -w"
-fi
+export EDITOR="code -w"
 
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
@@ -30,11 +24,11 @@ plugins=(git)
 source $ZSH/oh-my-zsh.sh
 
 alias cls="tput reset"
-alias awsconfig="code $HOME/.aws/config"
-alias awscredentials="code $HOME/.aws/credentials"
+alias awsconfig="eval $EDITOR $HOME/.aws/config"
+alias awscredentials="eval $EDITOR $HOME/.aws/credentials"
 alias fixcreds="ssh-add -K $HOME/.ssh/id_rsa && ssh-add -K $HOME/.ssh/id_ed25519"
 alias codebase="cd $HOME/codebase"
-alias localconfig="code $HOME/.localrc"
+alias localconfig="eval $EDITOR $HOME/.localrc"
 
 function os_install_package() {
     if [[ "$OSTYPE" = "darwin"* ]]
@@ -104,8 +98,8 @@ alias updatelocal="
 
 # Zsh
 alias reload="source $HOME/.zshrc"
-alias zshconfig="code $HOME/.zshrc"
-alias zshtheme="code $HOME/.oh-my-zsh/custom/themes/flatherskevin.zsh-theme"
+alias zshconfig="eval $EDITOR $HOME/.zshrc"
+alias zshtheme="eval $EDITOR $HOME/.oh-my-zsh/custom/themes/flatherskevin.zsh-theme"
 alias zshupdaterc="curl https://raw.githubusercontent.com/flatherskevin/local/main/.zshrc -o $HOME/.zshrc"
 alias zshupdatetheme="curl https://raw.githubusercontent.com/flatherskevin/local/main/flatherskevin.zsh-theme -o $HOME/.oh-my-zsh/custom/themes/flatherskevin.zsh-theme"
 alias zshupdate="zshupdaterc && zshupdatetheme && reload"
@@ -124,6 +118,8 @@ alias gitrebimain="gitmainp && git checkout - && git rebase -i main"
 alias gitreba="git rebase --abort"
 alias gitrebc="git rebase --continue"
 alias gitc="git checkout"
+alias gitacfix="gitac \"Fixes per PR\" && gitpu"
+alias gitfc="git fetch && gitc"
 
 # Python
 alias venvactivate="source .venv/bin/activate &> /dev/null || source venv/bin/activate &> /dev/null || true"
