@@ -64,15 +64,8 @@ function os_install_aws_cli() {
 }
 
 function os_install_python() {
-    git clone https://github.com/pyenv/pyenv.git $PYENV_ROOT
-    git -C $PYENV_ROOT pull
-    if [[ "$OSTYPE" = "linux-gnu"* ]]
-    then
-        os_install_package libssl-dev
-    fi
-    $PYENV_ROOT/bin/pyenv install $PYENV_VERSION
-    curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
-    pip install virtualenv
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    uv python install 3.12
 }
 
 function install_nodejs() {
@@ -124,7 +117,8 @@ alias gitfc="git fetch && gitc"
 # Python
 alias venvactivate="source .venv/bin/activate &> /dev/null || source venv/bin/activate &> /dev/null || true"
 venvactivate
-alias venvcreate="python3 -m virtualenv ./.venv"
+alias venvcreate="uv venv ./.venv"
+alias venvall="venvcreate && venvactivate"
 alias venvpytest="./.venv/bin/pytest --cache-clear"
 alias venvpytestcov="pytest_coverage"
 alias pyi="pip install -r requirements.txt -U"
