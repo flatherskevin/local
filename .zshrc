@@ -121,8 +121,8 @@ alias venvcreate="uv venv ./.venv"
 alias venvall="venvcreate && venvactivate"
 alias venvpytest="./.venv/bin/pytest --cache-clear"
 alias venvpytestcov="pytest_coverage"
-alias pyi="pip install -r requirements.txt -U"
-alias pyfreeze="pip freeze > requirements.txt"
+alias pyi="uv pip install -r requirements.txt"
+alias pyfreeze="uv pip freeze > requirements.txt"
 
 pytest_coverage(){
     venvpytest --cov=$1 --cov-report term-missing
