@@ -65,7 +65,8 @@ function os_install_aws_cli() {
 
 function os_install_python() {
     curl -LsSf https://astral.sh/uv/install.sh | sh
-    uv python install 3.12
+    uv python install 3.14
+    uv python pin 3.14 --global
 }
 
 function install_nodejs() {
@@ -77,16 +78,20 @@ function install_nodejs() {
     npm i -g corepack
 }
 
+function install_kitty_terminal() {
+    curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin
+}
+
 alias updatelocal="
     os_update
     os_install_package git && \
     os_install_package unzip && \
     /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\" && \
     os_install_python && \
-    pip3 install virtualenv && \
     install_nodejs && \
     if [ ! -d $HOME/.tfenv ] ; then git clone https://github.com/tfutils/tfenv.git $HOME/.tfenv; else git -C $HOME/.tfenv pull ; fi && \
     os_install_aws_cli
+    install_kitty_terminal
 "
 
 # Zsh
@@ -99,13 +104,16 @@ alias zshupdate="zshupdaterc && zshupdatetheme && reload"
 
 # Git
 alias gitac="git add . && git commit -m"
+alias gitdevp="git checkout develop && git pull"
 alias gitmasterp="git checkout master && git pull"
 alias gitmainp="git checkout main && git pull"
 alias gitpu="git branch --show-current | xargs -I {} git push -u origin {}"
 alias gitb="git checkout -b"
 alias gitlog="git log --oneline"
+alias gitrebmaster="gitdevp && git checkout - && git rebase develop"
 alias gitrebmaster="gitmasterp && git checkout - && git rebase master"
 alias gitrebmain="gitmainp && git checkout - && git rebase main"
+alias gitrebidev="gitdevp && git checkout - && git rebase -i develop"
 alias gitrebimaster="gitmasterp && git checkout - && git rebase -i master"
 alias gitrebimain="gitmainp && git checkout - && git rebase -i main"
 alias gitreba="git rebase --abort"
@@ -119,6 +127,7 @@ alias venvactivate="source .venv/bin/activate &> /dev/null || source venv/bin/ac
 venvactivate
 alias venvcreate="uv venv ./.venv"
 alias venvall="venvcreate && venvactivate"
+alias venvallnew="rm -rf ./.venv && venvall"
 alias venvpytest="./.venv/bin/pytest --cache-clear"
 alias venvpytestcov="pytest_coverage"
 alias pyi="uv pip install -r requirements.txt"
