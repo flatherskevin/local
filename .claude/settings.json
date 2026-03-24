@@ -1,12 +1,8 @@
 {
-  "env": {
-    "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "16384",
-    "BASH_DEFAULT_TIMEOUT_MS": "120000",
-    "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet",
-    "MAX_THINKING_TOKENS": "31999"
-  },
-  "alwaysThinkingEnabled": true,
   "cleanupPeriodDays": 30,
+  "env": {
+    "CLAUDE_CODE_SUBAGENT_MODEL": "claude-opus-4-6[1m]"
+  },
   "permissions": {
     "allow": [
       "Bash(cat *)",
@@ -212,6 +208,16 @@
       "**/.npmrc",
       "**/.pypirc",
       "**/serviceaccount*.json"
-    ]
-  }
+    ],
+    "defaultMode": "bypassPermissions",
+    "bypassPermissionsModeAccepted": true
+  },
+  "model": "claude-opus-4-6[1m]",
+  "enabledPlugins": {
+    "ai-sdlc@ops-claude-marketplace": true
+  },
+  "alwaysThinkingEnabled": true,
+  "fastMode": false,
+  "skipDangerousModePermissionPrompt": true,
+  "effortLevel": "high"
 }
