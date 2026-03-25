@@ -29,6 +29,10 @@ alias awscredentials="eval $EDITOR $HOME/.aws/credentials"
 alias fixcreds="ssh-add -K $HOME/.ssh/id_rsa && ssh-add -K $HOME/.ssh/id_ed25519"
 alias codebase="cd $HOME/codebase"
 alias localconfig="eval $EDITOR $HOME/.localrc"
+alias bash="/opt/homebrew/bin/bash"
+alias awake="caffeinate -disu"
+alias onedisplay="displayplacer 'id:2 enabled:false' || displayplacer 'id:3 enabled:false'"
+alias c="eval $EDITOR"
 
 function os_install_package() {
     if [[ "$OSTYPE" = "darwin"* ]]
@@ -172,5 +176,11 @@ alias dockerrm="docker rm \$(docker ps -a -q) || echo 'No containers to delete'"
 alias dockerrmi="docker rmi \$(docker image ls -qa) -f || echo 'No images to delete'"
 alias dockervp="docker volume prune"
 alias dockerkri="dockerkill && dockerrm && dockervp && dockerrmi"
+
+# AWS
+alias whoamiaws='aws sts get-caller-identity'
+alias awsrmcache="rm -rf $HOME/.aws/cache && rm -rf $HOME/.aws/cli && rm -rf $HOME/.aws/sso"
+
+. "$HOME/.cargo/env" || echo "uv not installed"
 
 export PATH=$HOME/.local/bin:$PATH
