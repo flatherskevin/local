@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage:
+  dev                Pick a git repo and open or resume a tmux session
+  dev /path/to/repo  Open or resume a tmux session for that repo
+EOF
+}
+
+sanitize_session_name() {
+  local input="$1"
+  printf '%s' "$input" | tr '/ .:@' '-----' | tr -cd '[:alnum:]_-'
+}
+
+list_roots() {
+  local candidates=(
+    "$HOME/code"
+    "$HOME/codebase"
+    "$HOME/dev"
+    "$HOME/src"
+    "$HOME/work"
+    "$HOME/workspace"
+    "$HOME/Documents/code"
+  )
+
+  for root in "${candidates[@]}"; do
+    [[ -d "$root" ]] && printf '%s\n' "$root"
+  done
+}
+
+list_projects() {
+  local root gitdir
+  while IFS= read -r root; do
+    while IFS= read -r gitdir; do
+      dirname "$gitdir"
+    done < <(fd --hidden --follow --type d '^\\.git$' "$root" 2>/dev/null)
+  done < <(list_roots)
+}
+
+pick_project() {
+  if ! command -v fzf >/dev/null 2>&1; then
+    printf 'fzf is required for interactive project selection\n' >&2
+    exit 1
+  fi
+
+  list_projects | sort -u | fzf --prompt='Project > ' --height=50% --layout=reverse --border
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  usage
+  exit 0
+fi
+
+if [[ -n "${1:-}" ]]; then
+  if [[ -d "$1/.git" ]]; then
+    project="$(cd "$1" && pwd)"
+  elif [[ -d "$1" ]]; then
+    project="$(cd "$1" && pwd)"
+  else
+    printf 'Path does not exist: %s\n' "$1" >&2
+    exit 1
+  fi
+else
+  project="$(pick_project)"
+fi
+
+if [[ -z "$project" ]]; then
+  exit 0
+fi
+
+session_name="$(sanitize_session_name "${project#$HOME/}")"
+if [[ -z "$session_name" ]]; then
+  session_name="$(sanitize_session_name "$(basename "$project")")"
+fi
+
+if ! tmux has-session -t "$session_name" 2>/dev/null; then
+  tmux new-session -d -s "$session_name" -c "$project"
+  tmux split-window -h -c "$project" -t "${session_name}:1"
+  tmux select-pane -t "${session_name}:1.1"
+  tmux send-keys -t "${session_name}:1.1" "nvim" C-m
+  tmux select-pane -t "${session_name}:1.2"
+fi
+
+if [[ -n "${TMUX:-}" ]]; then
+  tmux switch-client -t "$session_name"
+else
+  exec tmux attach-session -t "$session_name"
+fi
+

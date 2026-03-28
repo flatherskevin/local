@@ -184,3 +184,7 @@ alias awsrmcache="rm -rf $HOME/.aws/cache && rm -rf $HOME/.aws/cli && rm -rf $HO
 . "$HOME/.cargo/env" || echo "uv not installed"
 
 export PATH=$HOME/.local/bin:$PATH
+
+# Terminal-first Neovim workflow additions live in a separate file so this
+# long-standing shell config can stay the primary entrypoint.
+[[ -f "$HOME/.config/zsh/workflow.zsh" ]] && source "$HOME/.config/zsh/workflow.zsh"
