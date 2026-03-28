@@ -99,17 +99,13 @@ repo.
 
 For a full tutorial on how to use this environment day to day, read:
 
-- [`docs/neovim-terminal-workflow-guide.md`](docs/neovim-terminal-workflow-guide.md)
+- [`docs/README.md`](docs/README.md)
 
-That guide is written for a VS Code user moving into this setup and is organized
-as a crawl, walk, run progression over roughly 2 to 3 weeks. It covers:
-
-- how kitty, tmux, and Neovim fit together
-- the most important daily workflows
-- migration mapping from familiar VS Code habits
-- multi-repo work patterns
-- how to combine the setup with terminal-first AI tooling without adding noisy
-  editor integrations
+The tutorial is split into separate chapters rather than one long document. It
+starts by explaining why the repo structure expanded, then walks through the
+mental model, install and validation flow, VS Code migration, crawl/walk/run
+adoption plan, and separate chapters for tmux, kitty, Neovim, multi-repo work,
+and terminal-first AI usage.
 
 ## VS Code Migration Defaults
 
