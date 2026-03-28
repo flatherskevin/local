@@ -1,3 +1,5 @@
+brew "awscli"
+brew "bash"
 brew "fd"
 brew "fzf"
 brew "git"
