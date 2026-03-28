@@ -37,12 +37,15 @@ else
   status=1
 fi
 
-if tmux start-server >/dev/null 2>&1 && tmux source-file "${HOME}/.config/tmux/tmux.conf" >/dev/null 2>&1; then
+tmux_validation_session="__local_validate__"
+if tmux new-session -d -s "$tmux_validation_session" >/dev/null 2>&1 \
+  && tmux source-file "${HOME}/.config/tmux/tmux.conf" >/dev/null 2>&1; then
   printf '[ok] tmux config loads cleanly\n'
 else
   printf '[missing] tmux config failed to load\n' >&2
   status=1
 fi
+tmux kill-session -t "$tmux_validation_session" >/dev/null 2>&1 || true
 
 if [[ "$status" -ne 0 ]]; then
   printf '[dotfiles] validation failed\n' >&2
@@ -50,4 +53,3 @@ if [[ "$status" -ne 0 ]]; then
 fi
 
 printf '[dotfiles] validation passed\n'
-

@@ -1,5 +1,3 @@
-tap "homebrew/bundle"
-
 brew "fd"
 brew "fzf"
 brew "git"
@@ -15,10 +13,10 @@ brew "shfmt"
 brew "stylua"
 brew "terraform"
 brew "tflint"
+brew "tree-sitter-cli"
 brew "tmux"
 brew "uv"
 brew "yq"
 
 cask "font-jetbrains-mono-nerd-font"
 cask "kitty"
-

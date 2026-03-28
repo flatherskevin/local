@@ -29,6 +29,33 @@ elif [[ -x /usr/local/bin/brew ]]; then
   eval "$(/usr/local/bin/brew shellenv)"
 fi
 
+prepare_kitty_install() {
+  local current_version expected_version
+
+  if [[ ! -d /Applications/kitty.app ]]; then
+    return 0
+  fi
+
+  if brew list --cask kitty >/dev/null 2>&1; then
+    return 0
+  fi
+
+  current_version="$(
+    /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' \
+      /Applications/kitty.app/Contents/Info.plist 2>/dev/null || true
+  )"
+  expected_version="$(brew info --cask kitty | awk 'NR==1 { sub(":", "", $2); print $2 }')"
+
+  if [[ -z "$current_version" || -z "$expected_version" || "$current_version" == "$expected_version" ]]; then
+    return 0
+  fi
+
+  ensure_dir "$BACKUP_DIR"
+  log "Backing up existing kitty.app ${current_version} before Homebrew installs ${expected_version}"
+  mv /Applications/kitty.app "${BACKUP_DIR}/kitty.app"
+}
+
+prepare_kitty_install
 log "Installing Homebrew packages"
 brew bundle --file "${REPO_ROOT}/Brewfile"
 
@@ -48,4 +75,3 @@ log "Running validation checks"
 
 log "Bootstrap complete"
 log "Open a new shell or run: source ~/.zshrc"
-

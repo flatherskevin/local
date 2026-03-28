@@ -17,5 +17,4 @@ printf '[dotfiles] Installing Mason tools\n'
 nvim --headless "+MasonToolsInstallSync" +qa
 
 printf '[dotfiles] Updating Treesitter parsers\n'
-nvim --headless "+TSUpdateSync" +qa
-
+nvim --headless "+TSUpdate" +qa

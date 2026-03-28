@@ -12,7 +12,6 @@ return {
 
   { import = "lazyvim.plugins.extras.editor.neo-tree" },
   { import = "lazyvim.plugins.extras.editor.snacks_picker" },
-  { import = "lazyvim.plugins.extras.util.lazygit" },
 
   { import = "lazyvim.plugins.extras.lang.go" },
   { import = "lazyvim.plugins.extras.lang.json" },
@@ -23,4 +22,3 @@ return {
   { import = "lazyvim.plugins.extras.lang.typescript" },
   { import = "lazyvim.plugins.extras.lang.yaml" },
 }
-
