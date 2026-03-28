@@ -35,7 +35,7 @@ For the first week, you should mostly live in:
 
 ## Learning Path
 
-1. [01-why-this-repo-looks-bigger-now.md](01-why-this-repo-looks-bigger-now.md)
+1. [01-getting-oriented.md](01-getting-oriented.md)
 2. [02-mental-model.md](02-mental-model.md)
 3. [03-install-and-validate.md](03-install-and-validate.md)
 4. [04-vscode-bridge.md](04-vscode-bridge.md)
@@ -57,3 +57,9 @@ By the end of week 2, you should be using tmux and LSP features deliberately.
 
 By the end of week 3, the setup should feel like your working environment rather
 than something you are still trying out.
+
+## Appendix
+
+These are optional supporting documents, not part of the tutorial sequence:
+
+- [appendix-repo-structure.md](appendix-repo-structure.md)
