@@ -95,6 +95,22 @@ starts `nvim` in the left pane, and leaves the right pane for tests, git, AI
 tools, and logs. Re-running `dev` re-attaches to the existing session for that
 repo.
 
+## Learning The Setup
+
+For a full tutorial on how to use this environment day to day, read:
+
+- [`docs/neovim-terminal-workflow-guide.md`](docs/neovim-terminal-workflow-guide.md)
+
+That guide is written for a VS Code user moving into this setup and is organized
+as a crawl, walk, run progression over roughly 2 to 3 weeks. It covers:
+
+- how kitty, tmux, and Neovim fit together
+- the most important daily workflows
+- migration mapping from familiar VS Code habits
+- multi-repo work patterns
+- how to combine the setup with terminal-first AI tooling without adding noisy
+  editor integrations
+
 ## VS Code Migration Defaults
 
 - `F1`: keymap help
