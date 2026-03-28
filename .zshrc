@@ -41,6 +41,7 @@ alias reload="source $HOME/.zshrc"
 alias zshconfig="eval $EDITOR $HOME/.zshrc"
 alias zshtheme="eval $EDITOR $HOME/.oh-my-zsh/custom/themes/flatherskevin.zsh-theme"
 alias zshupdate="updatelocal && reload"
+alias updatezshrc="zshupdate"
 
 # Git
 alias gitac="git add . && git commit -m"
