@@ -1,18 +1,8 @@
 ZSH_DISABLE_COMPFIX="true"
 
-# Pyenv
-export PYENV_ROOT="$HOME/.pyenv"
-export PATH=$PYENV_ROOT/shims:$PYENV_ROOT/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH
-export PYENV_SHELL="zsh"
-if which pyenv > /dev/null; then eval "$(pyenv init -)"; fi
-export PATH=/usr/local/git/bin:$PATH
-export PATH=$HOME/.tfenv/bin:$PATH
-export PATH=./node_modules/.bin:$PATH
-export PATH=$HOME/linuxbrew/.linuxbrew/bin/brew:$PATH
-
-source $HOME/.poetry/env &> /dev/null || true
-
 export EDITOR="code -w"
+export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$HOME/.local/bin:$PATH"
+export PATH="./node_modules/.bin:$PATH"
 
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
@@ -34,77 +24,22 @@ alias awake="caffeinate -disu"
 alias onedisplay="displayplacer 'id:2 enabled:false' || displayplacer 'id:3 enabled:false'"
 alias c="eval $EDITOR"
 
-function os_install_package() {
-    if [[ "$OSTYPE" = "darwin"* ]]
-    then
-        brew install $@ || brew upgrade $@
-    elif [[ "$OSTYPE" = "linux-gnu"* ]]
-    then
-        sudo apt -y install $@
+local_repo="${HOME}/codebase/local"
+
+update_local_env() {
+    if [[ -x "${local_repo}/install.sh" ]]; then
+        "${local_repo}/install.sh"
+    else
+        curl -fsSL https://raw.githubusercontent.com/flatherskevin/local/main/install.sh | bash
     fi
 }
 
-function os_update() {
-    if [[ "$OSTYPE" = "darwin"* ]]
-    then
-        brew update && brew upgrade
-    elif [[ "$OSTYPE" = "linux-gnu"* ]]
-    then
-        sudo apt update && sudo apt -y upgrade
-    fi
-}
-
-function os_install_aws_cli() {
-    if [[ "$OSTYPE" = "darwin"* ]]
-    then
-        curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o $HOME/AWSCLIV2.pkg && sudo installer -pkg $HOME/AWSCLIV2.pkg -target /
-    elif [[ "$OSTYPE" = "linux-gnueabihf"* ]]
-    then
-        pip install git+git://github.com/aws/aws-cli.git@2.3.6
-    elif [[ "$OSTYPE" = "linux-gnu"* ]]
-    then
-        curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o $HOME/awscliv2.zip && unzip $HOME/awscliv2.zip -d $HOME/aws/ && sudo $HOME/aws/install --update
-    fi
-}
-
-function os_install_python() {
-    curl -LsSf https://astral.sh/uv/install.sh | sh
-    uv python install 3.14
-    uv python pin 3.14 --global
-}
-
-function install_nodejs() {
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
-    export NVM_DIR="$HOME/.nvm"
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-    nvm install 20.11.1
-    npm i -g corepack
-}
-
-function install_kitty_terminal() {
-    curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin
-}
-
-alias updatelocal="
-    os_update
-    os_install_package git && \
-    os_install_package unzip && \
-    /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\" && \
-    os_install_python && \
-    install_nodejs && \
-    if [ ! -d $HOME/.tfenv ] ; then git clone https://github.com/tfutils/tfenv.git $HOME/.tfenv; else git -C $HOME/.tfenv pull ; fi && \
-    os_install_aws_cli
-    install_kitty_terminal
-"
+alias updatelocal="update_local_env"
 
 # Zsh
 alias reload="source $HOME/.zshrc"
 alias zshconfig="eval $EDITOR $HOME/.zshrc"
 alias zshtheme="eval $EDITOR $HOME/.oh-my-zsh/custom/themes/flatherskevin.zsh-theme"
-alias zshupdaterc="curl https://raw.githubusercontent.com/flatherskevin/local/main/.zshrc -o $HOME/.zshrc"
-alias zshupdatetheme="curl https://raw.githubusercontent.com/flatherskevin/local/main/flatherskevin.zsh-theme -o $HOME/.oh-my-zsh/custom/themes/flatherskevin.zsh-theme"
-alias zshupdate="zshupdaterc && zshupdatetheme && reload"
 
 # Git
 alias gitac="git add . && git commit -m"
@@ -165,11 +100,6 @@ source $HOME/.localrc 2> /dev/null
 alias gotest="go test -gcflags=all=-l ./..."
 alias gotestcov="gotest -coverprofile=coverage.out && go tool cover -html=coverage.out"
 
-# NVM
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-
 # Docker (Optional)
 alias dockerkill="docker kill \$(docker ps -a --format ' {{.ID}}') || echo 'No containers to kill' "
 alias dockerrm="docker rm \$(docker ps -a -q) || echo 'No containers to delete'"
@@ -181,6 +111,6 @@ alias dockerkri="dockerkill && dockerrm && dockervp && dockerrmi"
 alias whoamiaws='aws sts get-caller-identity'
 alias awsrmcache="rm -rf $HOME/.aws/cache && rm -rf $HOME/.aws/cli && rm -rf $HOME/.aws/sso"
 
-. "$HOME/.cargo/env" || echo "uv not installed"
-
-export PATH=$HOME/.local/bin:$PATH
+# Terminal-first Neovim workflow additions live in a separate file so this
+# long-standing shell config can stay the primary entrypoint.
+[[ -f "$HOME/.config/zsh/workflow.zsh" ]] && source "$HOME/.config/zsh/workflow.zsh"
