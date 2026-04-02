@@ -71,22 +71,25 @@ Your work survives terminal closes, laptop sleeps, and SSH disconnects.
 
 This is what you see after running `dev`:
 
-```
-+------------------------------------------+---------------------+
-|                                          |                     |
-|  Neovim                                  |  Shell              |
-|                                          |                     |
-|  ~ open files here                       |  $ run commands     |
-|  ~ search code here                      |  $ tests            |
-|  ~ LSP features here                     |  $ git              |
-|  ~ formatting here                       |  $ make / uv        |
-|                                          |  $ logs             |
-|                                          |  $ AI tools         |
-|                                          |                     |
-|  [F5] search  [F6] files  [F8] explorer  |                     |
-|                                          |                     |
-+------------------------------------------+---------------------+
-  tmux pane 1 (editor)                       tmux pane 2 (shell)
+```mermaid
+block-beta
+  columns 2
+  block:editor["tmux pane 1 — Neovim (60%)"]
+    columns 1
+    e1["open files"]
+    e2["search code"]
+    e3["LSP features"]
+    e4["formatting"]
+    e5["F5 search · F6 files · F8 explorer"]
+  end
+  block:shell["tmux pane 2 — Shell (40%)"]
+    columns 1
+    s1["run commands"]
+    s2["tests"]
+    s3["git"]
+    s4["make / uv"]
+    s5["logs · AI tools"]
+  end
 ```
 
 The left pane takes about 60% of the width. Neovim opens there automatically.
