@@ -11,7 +11,10 @@ alias vim='nvim'
 alias lg='lazygit'
 alias tl='tmux ls'
 alias ta='tmux attach -t'
+alias tk='tmux ls -F "#{session_name}" | fzf --prompt="Kill session > " --height=50% --layout=reverse --border | xargs -I{} tmux kill-session -t {}'
 alias dev='~/.local/bin/dev'
+alias cheat='~/.local/bin/cheat'
+alias keys='cheat'
 
 workon() {
   dev "$@"

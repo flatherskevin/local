@@ -1,0 +1,144 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# Colors
+BOLD='\033[1m'
+DIM='\033[2m'
+CYAN='\033[36m'
+YELLOW='\033[33m'
+GREEN='\033[32m'
+MAGENTA='\033[35m'
+RESET='\033[0m'
+
+header() {
+  printf '\n%b%b  %s%b\n' "$BOLD" "$CYAN" "$1" "$RESET"
+  printf '%b  %s%b\n' "$DIM" "$(printf '%.0s─' $(seq 1 ${#1}))" "$RESET"
+}
+
+entry() {
+  local key="$1" desc="$2"
+  local pad=$((22 - ${#key}))
+  [[ $pad -lt 1 ]] && pad=1
+  local dots
+  dots=$(printf '%*s' "$pad" '' | tr ' ' '.')
+  printf '  %b%-s%b %b%s%b %s\n' "$BOLD$YELLOW" "$key" "$RESET" "$DIM" "$dots" "$RESET" "$desc"
+}
+
+section_kitty() {
+  header "Kitty Terminal"
+  entry "kitty_mod+Enter"  "New window"
+  entry "kitty_mod+t"      "New tab"
+  entry "kitty_mod+d"      "Vertical split"
+  entry "kitty_mod+Shift+d" "Horizontal split"
+  entry "kitty_mod+]"      "Next window"
+  entry "kitty_mod+["      "Previous window"
+  entry "kitty_mod+w"      "Close window"
+  entry "kitty_mod+Right"  "Next tab"
+  entry "kitty_mod+Left"   "Previous tab"
+}
+
+section_tmux() {
+  header "Tmux (prefix: Ctrl-a)"
+  entry "Ctrl-a |"    "Split side by side"
+  entry "Ctrl-a -"    "Split stacked"
+  entry "Ctrl-a c"    "New window"
+  entry "Ctrl-a ,"    "Rename window"
+  entry "Ctrl-a s"    "Session/window tree"
+  entry "Ctrl-a h/j/k/l" "Move between panes"
+  entry "Ctrl-a H/J/K/L" "Resize panes"
+  entry "Ctrl-a z"    "Zoom pane"
+  entry "Ctrl-a f"    "Find window"
+  entry "Ctrl-a p"    "Previous window"
+  entry "Ctrl-a n"    "Next window"
+  entry "Ctrl-a d"    "Detach session"
+  entry "Ctrl-a r"    "Reload tmux config"
+}
+
+section_nvim_fkeys() {
+  header "Neovim F-Keys"
+  entry "F1"   "WhichKey help"
+  entry "F2"   "Rename symbol (LSP)"
+  entry "F3"   "Format file"
+  entry "F4"   "Code action"
+  entry "F5"   "Search in project (grep)"
+  entry "F6"   "Find files"
+  entry "F7"   "Switch buffer"
+  entry "F8"   "Toggle explorer"
+  entry "F9"   "Toggle terminal"
+  entry "F10"  "LazyGit"
+}
+
+section_lsp() {
+  header "Neovim LSP"
+  entry "gd"       "Go to definition"
+  entry "gr"       "Find references"
+  entry "K"        "Hover documentation"
+  entry "]d / [d"  "Next / previous diagnostic"
+  entry "Ctrl-o"   "Jump back"
+  entry "Ctrl-i"   "Jump forward"
+}
+
+section_vim() {
+  header "Vim Essentials"
+  entry "i / a / o"    "Insert / append / open line"
+  entry "Esc"          "Back to normal mode"
+  entry ":w / :q / :wq" "Save / quit / save+quit"
+  entry "/ n N"        "Search, next, previous"
+  entry "u / Ctrl-r"   "Undo / redo"
+  entry "yy / dd / p"  "Yank line / delete line / paste"
+  entry "ciw"          "Change inner word"
+  entry "di( / di\""   "Delete inside parens / quotes"
+  entry "w / b"        "Word forward / back"
+  entry "gg / G"       "Top / bottom of file"
+  entry "%"            "Jump to matching bracket"
+  entry "*"            "Search word under cursor"
+  entry ":vs / :sp"    "Vertical / horizontal split"
+  entry "Ctrl-h/j/k/l" "Move between splits"
+}
+
+section_shell() {
+  header "Shell Aliases"
+  entry "dev"      "Open project picker / tmux session"
+  entry "v / vim"  "Open Neovim"
+  entry "lg"       "Open LazyGit"
+  entry "tl"       "List tmux sessions"
+  entry "ta <name>" "Attach to tmux session"
+  entry "cheat"    "This cheatsheet"
+  entry "keys"     "Alias for cheat"
+}
+
+show_all() {
+  printf '\n%b%b  Terminal Workflow Cheatsheet%b\n' "$BOLD" "$GREEN" "$RESET"
+  section_kitty
+  section_tmux
+  section_nvim_fkeys
+  section_lsp
+  section_vim
+  section_shell
+  printf '\n'
+}
+
+usage() {
+  cat <<'EOF'
+Usage: cheat [section]
+
+Sections: kitty, tmux, nvim, lsp, vim, shell, all (default)
+EOF
+}
+
+case "${1:-all}" in
+  kitty)          section_kitty; printf '\n' ;;
+  tmux)           section_tmux; printf '\n' ;;
+  nvim|neovim|fkeys) section_nvim_fkeys; printf '\n' ;;
+  lsp)            section_lsp; printf '\n' ;;
+  vim)            section_vim; printf '\n' ;;
+  shell|alias*)   section_shell; printf '\n' ;;
+  all)            show_all | less -RFX ;;
+  -h|--help)      usage ;;
+  *)
+    printf 'Unknown section: %s\n\n' "$1" >&2
+    usage >&2
+    exit 1
+    ;;
+esac

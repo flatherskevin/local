@@ -15,6 +15,7 @@ link_path "${REPO_ROOT}/config/tmux/tmux.conf" "${HOME}/.config/tmux/tmux.conf"
 link_path "${REPO_ROOT}/config/zsh/workflow.zsh" "${HOME}/.config/zsh/workflow.zsh"
 
 link_path "${REPO_ROOT}/scripts/dev" "${HOME}/.local/bin/dev"
+link_path "${REPO_ROOT}/scripts/cheat" "${HOME}/.local/bin/cheat"
 
 append_line_once "${HOME}/.zshrc" '[[ -f "$HOME/.config/zsh/workflow.zsh" ]] && source "$HOME/.config/zsh/workflow.zsh"'
 

@@ -1,65 +1,95 @@
-# Workflow Guide
+# Terminal Workflow: 4-Week Learning Path
 
-This is a tutorial for a human developer moving from VS Code into a
-Neovim-centered terminal workflow.
-
-It is not meant to be read like reference documentation. It is meant to be used
-like a learning path over the first 2 to 3 weeks of real work.
+A structured course for moving from VS Code into a Neovim-centered terminal
+workflow using Kitty, tmux, and Neovim.
 
 ## Who This Is For
 
-This guide is for you if:
+- You are productive in VS Code or Cursor today
+- You want to move into Neovim without turning the transition into a hobby
+- You want strong language support without editor bloat
+- You expect to work closely with AI in the terminal
 
-- you are productive in VS Code or Cursor today
-- you want to move into Neovim without turning the transition into a hobby
-- you want strong language support without editor bloat
-- you expect to work closely with AI in the terminal
-- you want a practical system for multiple repositories
+## How To Use This Guide
 
-## How To Read This Guide
+Work through one day at a time. Each day has a goal, new concepts, concrete
+exercises, and a success checklist. Do not skip ahead.
 
-Read the chapters in order the first time.
+Start with the foundations, then follow the weekly schedule.
 
-- The first few chapters explain the shape of the environment.
-- The middle chapters tell you what to practice each week.
-- The later chapters go deeper on specific tools once the basics are stable.
+## Foundations
 
-Do not try to memorize everything.
+Read these before starting Week 1:
 
-For the first week, you should mostly live in:
+1. [Getting Oriented](00-foundations/01-getting-oriented.md) — your first-hour workflow
+2. [Mental Model](00-foundations/02-mental-model.md) — how kitty, tmux, and Neovim fit together
+3. [Install and Validate](00-foundations/03-install-and-validate.md) — get the environment running
+4. [VS Code Bridge](00-foundations/04-vscode-bridge.md) — translate your existing habits
 
-- [04-vscode-bridge.md](04-vscode-bridge.md)
-- [05-crawl-week-1.md](05-crawl-week-1.md)
-- [08-tmux-workflow.md](08-tmux-workflow.md)
-- [10-neovim-lazyvim-workflow.md](10-neovim-lazyvim-workflow.md)
+## Week 1: Survive
 
-## Learning Path
+Stop feeling lost. Open repos, find files, make edits, run commands.
 
-1. [01-getting-oriented.md](01-getting-oriented.md)
-2. [02-mental-model.md](02-mental-model.md)
-3. [03-install-and-validate.md](03-install-and-validate.md)
-4. [04-vscode-bridge.md](04-vscode-bridge.md)
-5. [05-crawl-week-1.md](05-crawl-week-1.md)
-6. [06-walk-week-2.md](06-walk-week-2.md)
-7. [07-run-week-3.md](07-run-week-3.md)
-8. [08-tmux-workflow.md](08-tmux-workflow.md)
-9. [09-kitty-workflow.md](09-kitty-workflow.md)
-10. [10-neovim-lazyvim-workflow.md](10-neovim-lazyvim-workflow.md)
-11. [11-multi-repo-workflow.md](11-multi-repo-workflow.md)
-12. [12-ai-terminal-workflow.md](12-ai-terminal-workflow.md)
+- [Week Overview](week-1-survive/README.md)
+- [Day 1: First Session](week-1-survive/day-1-first-session.md)
+- [Day 2: Files and Search](week-1-survive/day-2-files-and-search.md)
+- [Day 3: Editing Basics](week-1-survive/day-3-editing-basics.md)
+- [Day 4: Git and Shell](week-1-survive/day-4-git-and-shell.md)
+- [Day 5: Review and Reinforce](week-1-survive/day-5-review-and-reinforce.md)
 
-## What Success Looks Like
+## Week 2: Navigate
 
-By the end of week 1, you should be able to open the right repo, find files,
-search text, edit confidently, and keep a shell beside the editor.
+Turn the setup into a repeatable work system with tmux and LSP.
 
-By the end of week 2, you should be using tmux and LSP features deliberately.
+- [Week Overview](week-2-navigate/README.md)
+- [Day 1: Tmux Fundamentals](week-2-navigate/day-1-tmux-fundamentals.md)
+- [Day 2: LSP Navigation](week-2-navigate/day-2-lsp-navigation.md)
+- [Day 3: File Finding Mastery](week-2-navigate/day-3-file-finding-mastery.md)
+- [Day 4: Panes, Windows, Sessions](week-2-navigate/day-4-panes-windows-sessions.md)
+- [Day 5: Review and Reinforce](week-2-navigate/day-5-review-and-reinforce.md)
 
-By the end of week 3, the setup should feel like your working environment rather
-than something you are still trying out.
+## Week 3: Flow
+
+Feel fast rather than merely functional. Motions, formatting, multi-repo.
+
+- [Week Overview](week-3-flow/README.md)
+- [Day 1: Vim Motions](week-3-flow/day-1-vim-motions.md)
+- [Day 2: Formatting and Diagnostics](week-3-flow/day-2-formatting-and-diagnostics.md)
+- [Day 3: Kitty and Multi-Repo](week-3-flow/day-3-kitty-and-multi-repo.md)
+- [Day 4: Buffers and Splits](week-3-flow/day-4-buffers-and-splits.md)
+- [Day 5: Review and Reinforce](week-3-flow/day-5-review-and-reinforce.md)
+
+## Week 4: Master
+
+Own the environment. AI workflow, customization, advanced patterns, speed.
+
+- [Week Overview](week-4-master/README.md)
+- [Day 1: AI Terminal Workflow](week-4-master/day-1-ai-terminal-workflow.md)
+- [Day 2: Customization](week-4-master/day-2-customization.md)
+- [Day 3: Advanced Patterns](week-4-master/day-3-advanced-patterns.md)
+- [Day 4: Speed and Flow](week-4-master/day-4-speed-and-flow.md)
+- [Day 5: Graduation](week-4-master/day-5-graduation.md)
+
+## Quick Reference
+
+- Run `cheat` in your terminal for a color-formatted keybinding reference
+- Run `cheat tmux`, `cheat vim`, `cheat nvim`, etc. for specific sections
 
 ## Appendix
 
-These are optional supporting documents, not part of the tutorial sequence:
+- [Repo Structure](appendix/repo-structure.md)
+- [Cheatsheet Reference](appendix/cheatsheet.md)
 
-- [appendix-repo-structure.md](appendix-repo-structure.md)
+## What Success Looks Like
+
+**After Week 1:** You can open repos, find files, search text, edit confidently,
+and keep a shell beside the editor.
+
+**After Week 2:** You use tmux and LSP navigation deliberately and can manage
+multiple sessions.
+
+**After Week 3:** The setup feels like your working environment, not something
+you are still trying out.
+
+**After Week 4:** You are customizing the environment, using AI effectively, and
+working at speed.
