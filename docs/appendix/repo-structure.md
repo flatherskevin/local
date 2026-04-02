@@ -18,10 +18,10 @@ Those concerns are split by purpose so they stay maintainable.
 
 ## Top-Level Layout
 
-- [`bootstrap/`](../bootstrap): install and symlink flow
-- [`config/`](../config): tool configurations
-- [`scripts/`](../scripts): helper entrypoints and validation
-- [`docs/`](.): human usage guides
+- [`bootstrap/`](../../bootstrap): install and symlink flow
+- [`config/`](../../config): tool configurations
+- [`scripts/`](../../scripts): helper entrypoints and validation
+- [`docs/`](../): human usage guides
 
 ## Why Not Put Everything In `.zshrc`
 

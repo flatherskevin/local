@@ -2,11 +2,18 @@
 
 set -euo pipefail
 
+for cmd in fd fzf tmux; do
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    printf '%s is required but not installed\n' "$cmd" >&2
+    exit 1
+  fi
+done
+
 usage() {
   cat <<'EOF'
 Usage:
-  dev                Pick a git repo and open or resume a tmux session
-  dev /path/to/repo  Open or resume a tmux session for that repo
+  dev                Pick a project directory and open or resume a tmux session
+  dev /path/to/dir   Open or resume a tmux session for that directory
 EOF
 }
 
@@ -32,21 +39,23 @@ list_roots() {
 }
 
 list_projects() {
-  local root gitdir
+  local root
   while IFS= read -r root; do
-    while IFS= read -r gitdir; do
-      dirname "$gitdir"
-    done < <(fd --hidden --follow --type d '^\\.git$' "$root" 2>/dev/null)
+    fd --type d --max-depth 1 . "$root"
   done < <(list_roots)
 }
 
 pick_project() {
-  if ! command -v fzf >/dev/null 2>&1; then
-    printf 'fzf is required for interactive project selection\n' >&2
+  local projects
+  projects="$(list_projects | sort -u)"
+
+  if [[ -z "$projects" ]]; then
+    printf 'No project directories found. Searched under:\n' >&2
+    list_roots | sed 's/^/  /' >&2
     exit 1
   fi
 
-  list_projects | sort -u | fzf --prompt='Project > ' --height=50% --layout=reverse --border
+  printf '%s\n' "$projects" | fzf --prompt='Project > ' --height=50% --layout=reverse --border
 }
 
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
@@ -78,9 +87,13 @@ fi
 
 if ! tmux has-session -t "$session_name" 2>/dev/null; then
   tmux new-session -d -s "$session_name" -c "$project"
-  tmux split-window -h -c "$project" -t "${session_name}:1"
-  tmux select-pane -t "${session_name}:1.1"
+  # Left pane (60%): Neovim
+  tmux split-window -h -l 40% -c "$project" -t "${session_name}:1"
+  # Right pane splits vertically: top (67%) and bottom (33%)
+  tmux split-window -v -l 33% -c "$project" -t "${session_name}:1.2"
+  # Launch nvim in the left pane
   tmux send-keys -t "${session_name}:1.1" "nvim" C-m
+  # Focus the top-right shell pane
   tmux select-pane -t "${session_name}:1.2"
 fi
 
