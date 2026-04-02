@@ -10,25 +10,17 @@ same job.
 
 ## The Three Layers
 
-```
-+---------------------------------------------------------------+
-|  Kitty                                                        |
-|  (terminal emulator -- OS windows, tabs, GPU rendering)       |
-|                                                               |
-|  +----------------------------------------------------------+ |
-|  |  tmux                                                    | |
-|  |  (session manager -- panes, windows, persistence)        | |
-|  |                                                          | |
-|  |  +----------------------------+ +----------------------+ | |
-|  |  |  Neovim                    | |  Shell               | | |
-|  |  |  (editor -- code, LSP,    | |  (commands, tests,   | | |
-|  |  |   search, formatting)     | |   git, logs, AI)     | | |
-|  |  |                           | |                      | | |
-|  |  +----------------------------+ +----------------------+ | |
-|  |                                                          | |
-|  +----------------------------------------------------------+ |
-|                                                               |
-+---------------------------------------------------------------+
+```mermaid
+block-beta
+  columns 1
+  block:kitty["Kitty — terminal emulator (OS windows, tabs, GPU rendering)"]
+    columns 1
+    block:tmux["tmux — session manager (panes, windows, persistence)"]
+      columns 2
+      neovim["Neovim\neditor — code, LSP,\nsearch, formatting"]
+      shell["Shell\ncommands, tests,\ngit, logs, AI"]
+    end
+  end
 ```
 
 Each layer wraps the one inside it. They do not overlap.
@@ -95,26 +87,38 @@ Here is what happens when you press a key, depending on where you are:
 
 **You press `Ctrl-a |` (tmux prefix + split)**
 
-```
-Kitty sees: Ctrl-a     --> passes it through (not a kitty binding)
-tmux sees:  Ctrl-a |   --> intercepts it, creates a vertical split
-Neovim:                --> never sees the keypress
+```mermaid
+sequenceDiagram
+    participant K as Kitty
+    participant T as tmux
+    participant N as Neovim
+    K->>T: Ctrl-a (pass through, not a kitty binding)
+    T-xT: Ctrl-a | → intercepts, creates vertical split
+    Note over N: never sees the keypress
 ```
 
 **You press `F5` in the Neovim pane**
 
-```
-Kitty sees: F5         --> passes it through (not a kitty binding)
-tmux sees:  F5         --> passes it through (not a tmux binding)
-Neovim sees: F5        --> opens live grep search
+```mermaid
+sequenceDiagram
+    participant K as Kitty
+    participant T as tmux
+    participant N as Neovim
+    K->>T: F5 (pass through, not a kitty binding)
+    T->>N: F5 (pass through, not a tmux binding)
+    N-xN: F5 → opens live grep search
 ```
 
 **You press `F5` in the shell pane**
 
-```
-Kitty sees: F5         --> passes it through
-tmux sees:  F5         --> passes it through
-Shell sees: F5         --> nothing happens (F5 is not bound in the shell)
+```mermaid
+sequenceDiagram
+    participant K as Kitty
+    participant T as tmux
+    participant S as Shell
+    K->>T: F5 (pass through)
+    T->>S: F5 (pass through)
+    Note over S: nothing happens (F5 not bound in shell)
 ```
 
 The layers are strict. Each one only intercepts what it owns. If a keypress is
