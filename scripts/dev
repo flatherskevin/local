@@ -88,10 +88,10 @@ fi
 
 if ! tmux has-session -t "$session_name" 2>/dev/null; then
   tmux new-session -d -s "$session_name" -c "$project"
-  # Left pane (60%): Neovim
-  tmux split-window -h -l 40% -c "$project" -t "${session_name}:1"
-  # Right pane splits vertically: top (67%) and bottom (33%)
-  tmux split-window -v -l 33% -c "$project" -t "${session_name}:1.2"
+  # Left pane (67%): Neovim
+  tmux split-window -h -l 33% -c "$project" -t "${session_name}:1"
+  # Right column terminals split evenly
+  tmux split-window -v -p 50 -c "$project" -t "${session_name}:1.2"
   # Launch nvim in the left pane
   tmux send-keys -t "${session_name}:1.1" "nvim" C-m
   # Focus the top-right shell pane
