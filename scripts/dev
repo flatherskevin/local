@@ -80,6 +80,7 @@ if [[ -z "$project" ]]; then
   exit 0
 fi
 
+project="${project%/}"
 session_name="$(sanitize_session_name "${project#$HOME/}")"
 if [[ -z "$session_name" ]]; then
   session_name="$(sanitize_session_name "$(basename "$project")")"
@@ -102,4 +103,3 @@ if [[ -n "${TMUX:-}" ]]; then
 else
   exec tmux attach-session -t "$session_name"
 fi
-

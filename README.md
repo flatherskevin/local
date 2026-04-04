@@ -23,14 +23,17 @@ curl -fsSL https://raw.githubusercontent.com/flatherskevin/local/main/install.sh
 wget -qO- https://raw.githubusercontent.com/flatherskevin/local/main/install.sh | bash
 ```
 
-By default this installs or updates the repo at `~/codebase/local` and runs the
-bootstrap flow.
+By default this installs or updates the managed checkout at
+`~/.flatherskevin/local` and runs the bootstrap flow.
+
+Each install run refreshes that managed checkout with a fresh shallow clone of
+`main`.
 
 ## Manual Install
 
 ```bash
-git clone https://github.com/flatherskevin/local.git ~/codebase/local
-cd ~/codebase/local
+git clone --depth 1 --branch main https://github.com/flatherskevin/local.git ~/.flatherskevin/local
+cd ~/.flatherskevin/local
 ./bootstrap/macos.sh
 ```
 
@@ -49,7 +52,7 @@ After install:
 
 ```bash
 source ~/.zshrc
-~/codebase/local/scripts/validate-setup.sh
+~/.flatherskevin/local/scripts/validate-setup.sh
 ```
 
 ## Updating Later

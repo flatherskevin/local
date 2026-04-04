@@ -4,7 +4,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-BACKUP_DIR="${HOME}/.dotfiles-backups/$(date +%Y%m%d-%H%M%S)"
+LOCAL_HOME="${LOCAL_BASE_DIR:-${HOME}/.flatherskevin}"
+BACKUP_DIR="${LOCAL_HOME}/backups/$(date +%Y%m%d-%H%M%S)"
 
 log() {
   printf '[dotfiles] %s\n' "$*"
@@ -63,4 +64,3 @@ append_line_once() {
     log "Updated ${file_path}"
   fi
 }
-

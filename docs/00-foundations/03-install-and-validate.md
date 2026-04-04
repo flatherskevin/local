@@ -3,8 +3,8 @@
 ## Install
 
 ```bash
-git clone https://github.com/flatherskevin/local.git ~/codebase/local
-cd ~/codebase/local
+git clone --depth 1 --branch main https://github.com/flatherskevin/local.git ~/.flatherskevin/local
+cd ~/.flatherskevin/local
 chmod +x bootstrap/macos.sh scripts/*.sh scripts/dev
 ./bootstrap/macos.sh
 ```
@@ -138,11 +138,11 @@ Lazy will reinstall everything on next launch.
 ls -la ~/.config/tmux/tmux.conf
 ```
 
-It should point to `~/codebase/local/config/tmux/tmux.conf`. If not, re-run
+It should point to `~/.flatherskevin/local/config/tmux/tmux.conf`. If not, re-run
 the bootstrap or manually symlink:
 
 ```bash
-ln -sf ~/codebase/local/config/tmux/tmux.conf ~/.config/tmux/tmux.conf
+ln -sf ~/.flatherskevin/local/config/tmux/tmux.conf ~/.config/tmux/tmux.conf
 tmux source-file ~/.config/tmux/tmux.conf
 ```
 
