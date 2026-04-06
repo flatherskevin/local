@@ -14,6 +14,8 @@ usage() {
 Usage:
   dev                Pick a project directory and open or resume a tmux session
   dev /path/to/dir   Open or resume a tmux session for that directory
+  dev --refresh      Re-apply layout and settings to the current tmux session
+  dev --restart      Kill current session and start a fresh one for the same project
 EOF
 }
 
@@ -58,8 +60,57 @@ pick_project() {
   printf '%s\n' "$projects" | fzf --prompt='Project > ' --height=50% --layout=reverse --border
 }
 
+apply_settings() {
+  local session="$1"
+  tmux source-file ~/.config/tmux/tmux.conf
+  tmux set-window-option -t "${session}:1" main-pane-width 66%
+  tmux select-layout -t "${session}:1" main-vertical
+  tmux set-hook -t "$session" window-resized "select-layout main-vertical"
+}
+
+create_session() {
+  local session="$1" project="$2"
+  tmux new-session -d -s "$session" -c "$project"
+  tmux split-window -h -c "$project" -t "${session}:1"
+  tmux split-window -v -p 50 -c "$project" -t "${session}:1.2"
+  apply_settings "$session"
+  tmux send-keys -t "${session}:1.1" "nvim" C-m
+  tmux select-pane -t "${session}:1.2"
+}
+
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
   usage
+  exit 0
+fi
+
+if [[ "${1:-}" == "--restart" ]]; then
+  if [[ -z "${TMUX:-}" ]]; then
+    printf 'Not inside a tmux session\n' >&2
+    exit 1
+  fi
+  project="$(tmux display-message -p '#{session_path}')"
+  old_session="$(tmux display-message -p '#S')"
+  session_name="$(sanitize_session_name "${project#$HOME/}")"
+  if [[ -z "$session_name" ]]; then
+    session_name="$(sanitize_session_name "$(basename "$project")")"
+  fi
+  # Create new session first, switch to it, then kill the old one
+  temp_name="${session_name}-restarting"
+  create_session "$temp_name" "$project"
+  tmux switch-client -t "$temp_name"
+  tmux kill-session -t "$old_session"
+  tmux rename-session -t "$temp_name" "$session_name"
+  exit 0
+fi
+
+if [[ "${1:-}" == "--refresh" ]]; then
+  if [[ -z "${TMUX:-}" ]]; then
+    printf 'Not inside a tmux session\n' >&2
+    exit 1
+  fi
+  session="$(tmux display-message -p '#S')"
+  apply_settings "$session"
+  tmux display-message "Settings refreshed"
   exit 0
 fi
 
@@ -87,15 +138,7 @@ if [[ -z "$session_name" ]]; then
 fi
 
 if ! tmux has-session -t "$session_name" 2>/dev/null; then
-  tmux new-session -d -s "$session_name" -c "$project"
-  # Left pane (67%): Neovim
-  tmux split-window -h -l 33% -c "$project" -t "${session_name}:1"
-  # Right column terminals split evenly
-  tmux split-window -v -p 50 -c "$project" -t "${session_name}:1.2"
-  # Launch nvim in the left pane
-  tmux send-keys -t "${session_name}:1.1" "nvim" C-m
-  # Focus the top-right shell pane
-  tmux select-pane -t "${session_name}:1.2"
+  create_session "$session_name" "$project"
 fi
 
 if [[ -n "${TMUX:-}" ]]; then
