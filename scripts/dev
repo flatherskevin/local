@@ -60,6 +60,20 @@ pick_project() {
   printf '%s\n' "$projects" | fzf --prompt='Project > ' --height=50% --layout=reverse --border
 }
 
+reload_nvim() {
+  local session="$1"
+  local pane="${session}:1.1"
+  local pane_cmd
+  pane_cmd="$(tmux display-message -t "$pane" -p '#{pane_current_command}' 2>/dev/null || true)"
+  if [[ "$pane_cmd" == "nvim" || "$pane_cmd" == "vim" ]]; then
+    local project
+    project="$(tmux display-message -t "$pane" -p '#{pane_current_path}')"
+    tmux send-keys -t "$pane" Escape ":silent! wa | qa!" C-m
+    sleep 0.5
+    tmux send-keys -t "$pane" "nvim" C-m
+  fi
+}
+
 apply_settings() {
   local session="$1"
   tmux source-file ~/.config/tmux/tmux.conf
@@ -110,6 +124,7 @@ if [[ "${1:-}" == "--refresh" ]]; then
   fi
   session="$(tmux display-message -p '#S')"
   apply_settings "$session"
+  reload_nvim "$session"
   tmux display-message "Settings refreshed"
   exit 0
 fi
