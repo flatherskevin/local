@@ -88,10 +88,13 @@ fi
 
 if ! tmux has-session -t "$session_name" 2>/dev/null; then
   tmux new-session -d -s "$session_name" -c "$project"
-  # Left pane (67%): Neovim
-  tmux split-window -h -l 33% -c "$project" -t "${session_name}:1"
-  # Right column terminals split evenly
+  # Create panes: left (nvim) + right column split into two shells
+  tmux split-window -h -c "$project" -t "${session_name}:1"
   tmux split-window -v -p 50 -c "$project" -t "${session_name}:1.2"
+  # Use main-vertical layout to maintain 66/34 ratio through resizes
+  tmux set-window-option -t "${session_name}:1" main-pane-width 66%
+  tmux select-layout -t "${session_name}:1" main-vertical
+  tmux set-hook -t "$session_name" window-resized "select-layout main-vertical"
   # Launch nvim in the left pane
   tmux send-keys -t "${session_name}:1.1" "nvim" C-m
   # Focus the top-right shell pane
