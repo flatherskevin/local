@@ -16,6 +16,7 @@ Usage:
   dev /path/to/dir   Open or resume a tmux session for that directory
   dev --refresh      Re-apply layout and settings to the current tmux session
   dev --restart      Kill current session and start a fresh one for the same project
+  dev --resume       Reopen all tmux sessions as Kitty tabs
 EOF
 }
 
@@ -114,6 +115,16 @@ if [[ "${1:-}" == "--restart" ]]; then
   tmux switch-client -t "$temp_name"
   tmux kill-session -t "$old_session"
   tmux rename-session -t "$temp_name" "$session_name"
+  exit 0
+fi
+
+if [[ "${1:-}" == "--resume" ]]; then
+  sessions="$(tmux list-sessions -F '#{session_name}' 2>/dev/null)"
+  if [[ -z "$sessions" ]]; then
+    printf 'No tmux sessions to resume\n' >&2
+    exit 1
+  fi
+  printf '%s\n' "$sessions" | xargs -I{} kitty @ launch --type=tab tmux attach-session -t {}
   exit 0
 fi
 
