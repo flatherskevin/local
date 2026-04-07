@@ -62,6 +62,19 @@ return {
     end,
   },
   {
+    "akinsho/bufferline.nvim",
+    opts = {
+      options = {
+        close_command = function(bufnum)
+          Snacks.bufdelete({ buf = bufnum })
+        end,
+        right_mouse_command = function(bufnum)
+          Snacks.bufdelete({ buf = bufnum })
+        end,
+      },
+    },
+  },
+  {
     "iamcco/markdown-preview.nvim",
     ft = { "markdown" },
     build = function()
