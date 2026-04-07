@@ -134,6 +134,16 @@ if [[ "${1:-}" == "--workspace" ]]; then
     exit 1
   fi
   tmuxp load -d "$ws_file"
+
+  # Get session names created by tmuxp from the YAML
+  session_name="$(yq -r '.session_name' "$ws_file")"
+  if [[ -z "$session_name" || "$session_name" == "null" ]]; then
+    printf 'Could not read session_name from %s\n' "$ws_file" >&2
+    exit 1
+  fi
+
+  # Open a new Kitty OS window with the first session, then add tabs for the rest
+  kitty @ launch --type=os-window tmux attach-session -t "$session_name"
   exit 0
 fi
 
