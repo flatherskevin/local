@@ -17,6 +17,7 @@ Usage:
   dev --refresh      Re-apply layout and settings to the current tmux session
   dev --restart      Kill current session and start a fresh one for the same project
   dev --resume       Reopen all tmux sessions as Kitty tabs
+  dev --workspace F  Load a tmuxp workspace YAML file
 EOF
 }
 
@@ -115,6 +116,34 @@ if [[ "${1:-}" == "--restart" ]]; then
   tmux switch-client -t "$temp_name"
   tmux kill-session -t "$old_session"
   tmux rename-session -t "$temp_name" "$session_name"
+  exit 0
+fi
+
+if [[ "${1:-}" == "--workspace" ]]; then
+  if ! command -v tmuxp >/dev/null 2>&1; then
+    printf 'tmuxp is required but not installed. Run: brew install tmuxp\n' >&2
+    exit 1
+  fi
+  ws_file="${2:-}"
+  if [[ -z "$ws_file" ]]; then
+    printf 'Usage: dev --workspace <file.yaml>\n' >&2
+    exit 1
+  fi
+  if [[ ! -f "$ws_file" ]]; then
+    printf 'Workspace file not found: %s\n' "$ws_file" >&2
+    exit 1
+  fi
+  tmuxp load -d "$ws_file"
+
+  # Get session names created by tmuxp from the YAML
+  session_name="$(yq -r '.session_name' "$ws_file")"
+  if [[ -z "$session_name" || "$session_name" == "null" ]]; then
+    printf 'Could not read session_name from %s\n' "$ws_file" >&2
+    exit 1
+  fi
+
+  # Open a new Kitty OS window with the first session, then add tabs for the rest
+  kitty @ launch --type=os-window tmux attach-session -t "$session_name"
   exit 0
 fi
 

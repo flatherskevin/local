@@ -19,6 +19,7 @@ required_commands=(
   terraform
   tflint
   tmux
+  tmuxp
   uv
   yq
 )

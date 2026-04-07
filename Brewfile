@@ -11,6 +11,7 @@ brew "fzf"
 brew "lazygit"
 brew "ripgrep"
 brew "tmux"
+brew "tmuxp"
 
 # Editor and runtime foundation
 brew "neovim"

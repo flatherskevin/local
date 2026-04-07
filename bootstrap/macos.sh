@@ -67,6 +67,11 @@ fi
 log "Installing Claude Code and Codex CLI"
 npm install -g @anthropic-ai/claude-code @openai/codex
 
+if [[ ! -d "$HOME/.tmux/plugins/tpm" ]]; then
+  log "Installing tmux plugin manager (TPM)"
+  git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
+fi
+
 log "Linking configs and helper scripts"
 "${REPO_ROOT}/scripts/link-configs.sh"
 
