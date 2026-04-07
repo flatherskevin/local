@@ -27,56 +27,96 @@ entry() {
 
 section_kitty() {
   header "Kitty Terminal"
-  entry "kitty_mod+Enter"  "New window"
-  entry "kitty_mod+t"      "New tab"
-  entry "kitty_mod+d"      "Vertical split"
+  entry "Cmd+click"         "Open URL in browser"
+  entry "kitty_mod+Enter"   "New window"
+  entry "kitty_mod+t"       "New tab"
+  entry "kitty_mod+w"       "Close window"
+  entry "kitty_mod+d"       "Vertical split"
   entry "kitty_mod+Shift+d" "Horizontal split"
-  entry "kitty_mod+]"      "Next window"
-  entry "kitty_mod+["      "Previous window"
-  entry "kitty_mod+w"      "Close window"
-  entry "kitty_mod+Right"  "Next tab"
-  entry "kitty_mod+Left"   "Previous tab"
+  entry "kitty_mod+f"       "Toggle fullscreen (stack) layout"
+  entry "kitty_mod+Shift+f" "Toggle splits layout"
+  entry "kitty_mod+["       "Previous tab"
+  entry "kitty_mod+]"       "Next tab"
+  entry "kitty_mod+=/–"     "Increase / decrease font size"
+  entry "kitty_mod+Bksp"    "Reset font size"
+  entry "F9"                "Launch tmux session (main)"
+  entry "F10"               "Launch dev"
 }
 
 section_tmux() {
   header "Tmux (prefix: Ctrl-a)"
-  entry "Ctrl-a |"    "Split side by side"
-  entry "Ctrl-a -"    "Split stacked"
-  entry "Ctrl-a c"    "New window"
-  entry "Ctrl-a ,"    "Rename window"
-  entry "Ctrl-a s"    "Session/window tree"
-  entry "Ctrl-a h/j/k/l" "Move between panes"
-  entry "Ctrl-a H/J/K/L" "Resize panes"
-  entry "Ctrl-a z"    "Zoom pane"
-  entry "Ctrl-a f"    "Find window"
-  entry "Ctrl-a p"    "Previous window"
-  entry "Ctrl-a n"    "Next window"
-  entry "Ctrl-a d"    "Detach session"
-  entry "Ctrl-a r"    "Reload tmux config"
+  entry "Ctrl-a |"      "Split side by side"
+  entry "Ctrl-a -"      "Split stacked"
+  entry "Ctrl-a c"      "New window"
+  entry "Ctrl-a ,"      "Rename window"
+  entry "Ctrl-a 1-9"    "Jump to window by number"
+  entry "Ctrl-a n / p"  "Next / previous window"
+  entry "Ctrl-a s"      "Session/window tree"
+  entry "Ctrl-a h/j/k/l"  "Move between panes"
+  entry "Ctrl-a H/J/K/L"  "Resize panes"
+  entry "Ctrl-a z"      "Zoom pane (toggle)"
+  entry "Ctrl-a d"      "Detach session"
+  entry "Ctrl-a r"      "Reload tmux config"
+  entry "Ctrl-a Ctrl-s" "Save session (resurrect)"
+  entry "Ctrl-a Ctrl-r" "Restore session (resurrect)"
+}
+
+section_tmux_copy() {
+  header "Tmux Copy Mode"
+  entry "Scroll up"     "Enter copy mode"
+  entry "v"             "Start selection"
+  entry "y"             "Yank selection"
+  entry "Drag select"   "Copy to clipboard (OSC 52)"
+  entry "Double-click"  "Select word"
+  entry "Triple-click"  "Select line"
+  entry "Click"         "Clear selection (stays in copy mode)"
+  entry "Esc / q"       "Exit copy mode"
 }
 
 section_nvim_fkeys() {
   header "Neovim F-Keys"
-  entry "F1"   "WhichKey help"
+  entry "F1"   "WhichKey (show all keymaps)"
   entry "F2"   "Rename symbol (LSP)"
   entry "F3"   "Format file"
   entry "F4"   "Code action"
   entry "F5"   "Search in project (grep)"
   entry "F6"   "Find files"
   entry "F7"   "Switch buffer"
-  entry "F8"   "Toggle explorer"
-  entry "F9"   "Toggle terminal"
+  entry "F8"   "Toggle Neo-tree explorer"
+  entry "F9"   "Toggle terminal (vertical)"
   entry "F10"  "LazyGit"
 }
 
+section_neotree() {
+  header "Neo-tree (in explorer)"
+  entry "a"         "Add file/directory"
+  entry "d"         "Delete"
+  entry "r"         "Rename"
+  entry "c / x / p" "Copy / cut / paste"
+  entry "y"         "Copy file path to clipboard"
+  entry "Y"         "Copy relative path"
+  entry "Enter"     "Open file"
+  entry "s"         "Open in vertical split"
+  entry "S"         "Open in horizontal split"
+  entry "H"         "Toggle hidden files"
+  entry "R"         "Refresh tree"
+  entry "?"         "Show help"
+  entry "F8"        "Hide/show Neo-tree"
+}
+
 section_lsp() {
-  header "Neovim LSP"
-  entry "gd"       "Go to definition"
-  entry "gr"       "Find references"
-  entry "K"        "Hover documentation"
-  entry "]d / [d"  "Next / previous diagnostic"
-  entry "Ctrl-o"   "Jump back"
-  entry "Ctrl-i"   "Jump forward"
+  header "Neovim LSP & Diagnostics"
+  entry "gd"          "Go to definition"
+  entry "gr"          "Find references"
+  entry "K"           "Hover documentation"
+  entry "]d / [d"     "Next / previous diagnostic"
+  entry "Ctrl-o"      "Jump back"
+  entry "Ctrl-i"      "Jump forward"
+  entry "<leader>ud"  "Toggle diagnostics on/off"
+  entry "<leader>md"  "Toggle diagnostics (markdown)"
+  entry "<leader>fp"  "Find project files"
+  entry "<leader>fP"  "Search project text"
+  entry "<leader>fw"  "Toggle word wrap"
 }
 
 section_vim() {
@@ -98,21 +138,32 @@ section_vim() {
 }
 
 section_shell() {
-  header "Shell Aliases"
-  entry "dev"      "Open project picker / tmux session"
-  entry "v / vim"  "Open Neovim"
-  entry "lg"       "Open LazyGit"
-  entry "tl"       "List tmux sessions"
-  entry "ta <name>" "Attach to tmux session"
-  entry "cheat"    "This cheatsheet"
-  entry "keys"     "Alias for cheat"
+  header "Shell Aliases & Commands"
+  entry "dev"           "Open project picker / tmux session"
+  entry "dev --refresh"  "Re-apply layout to current session"
+  entry "dev --restart"  "Kill and restart current session"
+  entry "dev --resume"   "Reopen all sessions as Kitty tabs"
+  entry "dev --workspace" "Load tmuxp workspace YAML"
+  entry "v / vim"       "Open Neovim"
+  entry "lg"            "Open LazyGit"
+  entry "tl"            "List tmux sessions"
+  entry "ta <name>"     "Attach to tmux session"
+  entry "tk"            "Kill a tmux session (fuzzy)"
+  entry "reload"        "Reload shell config"
+  entry "localupdate"   "Update dotfiles installation"
+  entry "localconfig"   "Edit ~/.localrc"
+  entry "dockerstart"   "Start colima"
+  entry "dockerstop"    "Stop colima"
+  entry "cheat"         "This cheatsheet"
 }
 
 show_all() {
   printf '\n%b%b  Terminal Workflow Cheatsheet%b\n' "$BOLD" "$GREEN" "$RESET"
   section_kitty
   section_tmux
+  section_tmux_copy
   section_nvim_fkeys
+  section_neotree
   section_lsp
   section_vim
   section_shell
@@ -123,14 +174,16 @@ usage() {
   cat <<'EOF'
 Usage: cheat [section]
 
-Sections: kitty, tmux, nvim, lsp, vim, shell, all (default)
+Sections: kitty, tmux, copy, nvim, neotree, lsp, vim, shell, all (default)
 EOF
 }
 
 case "${1:-all}" in
   kitty)          section_kitty; printf '\n' ;;
   tmux)           section_tmux; printf '\n' ;;
+  copy)           section_tmux_copy; printf '\n' ;;
   nvim|neovim|fkeys) section_nvim_fkeys; printf '\n' ;;
+  neotree|tree|explorer) section_neotree; printf '\n' ;;
   lsp)            section_lsp; printf '\n' ;;
   vim)            section_vim; printf '\n' ;;
   shell|alias*)   section_shell; printf '\n' ;;
