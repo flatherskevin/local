@@ -16,6 +16,12 @@ return {
     "nvim-neo-tree/neo-tree.nvim",
     opts = {
       filesystem = {
+        filtered_items = {
+          visible = true,
+          hide_dotfiles = false,
+          hide_gitignored = false,
+          never_show = { ".git" },
+        },
         follow_current_file = {
           enabled = true,
         },
@@ -23,7 +29,9 @@ return {
         hijack_netrw_behavior = "open_current",
       },
       window = {
-        width = 32,
+        width = function()
+          return math.floor(vim.o.columns / 5)
+        end,
       },
     },
   },
