@@ -1,5 +1,13 @@
 local augroup = vim.api.nvim_create_augroup("workflow", { clear = true })
 
+vim.api.nvim_create_autocmd("VimEnter", {
+  group = augroup,
+  desc = "Open neo-tree on startup",
+  callback = function()
+    vim.cmd("Neotree show")
+  end,
+})
+
 vim.api.nvim_create_autocmd("TextYankPost", {
   group = augroup,
   desc = "Highlight text after yanking",

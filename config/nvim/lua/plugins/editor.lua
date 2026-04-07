@@ -23,7 +23,9 @@ return {
         hijack_netrw_behavior = "open_current",
       },
       window = {
-        width = 32,
+        width = function()
+          return math.floor(vim.o.columns / 5)
+        end,
       },
     },
   },
