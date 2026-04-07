@@ -1,0 +1,129 @@
+# Managed by github.com/flatherskevin/local
+# User overrides go in ~/.localrc
+
+ZSH_DISABLE_COMPFIX="true"
+
+# Path
+export PATH="$HOME/.local/bin:$HOME/.tfenv/bin:./node_modules/.bin:/usr/local/git/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+
+# Editor
+export EDITOR="nvim"
+export VISUAL="nvim"
+export PAGER=
+
+# Oh My Zsh
+export ZSH="$HOME/.oh-my-zsh"
+ZSH_THEME="flatherskevin"
+plugins=(git)
+[[ -f "$ZSH/oh-my-zsh.sh" ]] && source "$ZSH/oh-my-zsh.sh"
+
+# FZF
+export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
+export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+export FZF_DEFAULT_OPTS='--height=60% --layout=reverse --border'
+
+if command -v brew >/dev/null 2>&1; then
+  FZF_PREFIX="$(brew --prefix fzf 2>/dev/null)"
+  if [[ -n "$FZF_PREFIX" ]]; then
+    [[ -f "${FZF_PREFIX}/shell/completion.zsh" ]] && source "${FZF_PREFIX}/shell/completion.zsh"
+    [[ -f "${FZF_PREFIX}/shell/key-bindings.zsh" ]] && source "${FZF_PREFIX}/shell/key-bindings.zsh"
+  fi
+  unset FZF_PREFIX
+fi
+
+# NVM
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+
+# General
+alias cls="tput reset"
+alias reload="source $HOME/.zshrc"
+alias codebase="cd $HOME/codebase"
+alias localconfig="eval $EDITOR $HOME/.localrc"
+
+# Neovim / Tmux
+alias v='nvim'
+alias vim='nvim'
+alias lg='lazygit'
+alias tl='tmux ls'
+alias ta='tmux attach -t'
+alias tk='tmux ls -F "#{session_name}" | fzf --prompt="Kill session > " --height=50% --layout=reverse --border | xargs -I{} tmux kill-session -t {}'
+alias dev='~/.local/bin/dev'
+alias cheat='~/.local/bin/cheat'
+alias keys='cheat'
+
+workon() {
+  dev "$@"
+}
+
+# AWS
+alias awsconfig="eval $EDITOR $HOME/.aws/config"
+alias awscredentials="eval $EDITOR $HOME/.aws/credentials"
+alias fixcreds="ssh-add -K $HOME/.ssh/id_rsa && ssh-add -K $HOME/.ssh/id_ed25519"
+
+# Git
+alias gitac="git add . && git commit -m"
+alias gitmasterp="git checkout master && git pull"
+alias gitmainp="git checkout main && git pull"
+alias gitpu="git branch --show-current | xargs -I {} git push -u origin {}"
+alias gitb="git checkout -b"
+alias gitlog="git log --oneline"
+alias gitrebmaster="gitmasterp && git checkout - && git rebase master"
+alias gitrebmain="gitmainp && git checkout - && git rebase main"
+alias gitrebimaster="gitmasterp && git checkout - && git rebase -i master"
+alias gitrebimain="gitmainp && git checkout - && git rebase -i main"
+alias gitreba="git rebase --abort"
+alias gitrebc="git rebase --continue"
+alias gitc="git checkout"
+alias gitacfix="gitac \"Fixes per PR\" && gitpu"
+alias gitfc="git fetch && gitc"
+
+# Python
+alias venvactivate="source .venv/bin/activate &> /dev/null || source venv/bin/activate &> /dev/null || true"
+venvactivate
+alias venvcreate="uv venv ./.venv"
+alias venvall="venvcreate && venvactivate"
+alias venvpytest="./.venv/bin/pytest --cache-clear"
+alias venvpytestcov="pytest_coverage"
+alias pyi="uv pip install -r requirements.txt"
+alias pyfreeze="uv pip freeze > requirements.txt"
+
+pytest_coverage() {
+  venvpytest --cov=$1 --cov-report term-missing
+}
+
+# Golang
+alias gotest="go test -gcflags=all=-l ./..."
+alias gotestcov="gotest -coverprofile=coverage.out && go tool cover -html=coverage.out"
+
+# Terraform
+alias tf="terraform"
+alias tfa="terraform apply --auto-approve"
+alias tfp="terraform plan"
+alias tfw="terraform workspace"
+alias tfws="terraform workspace select"
+alias tfwsn="tf_select_or_new"
+alias tfwl="terraform workspace list"
+alias tfd="terraform destroy"
+alias tfi="terraform init"
+alias tft="terraform taint"
+alias tfr="terraform refresh"
+alias tfrmi="(rm -rf .terraform || true) && tfi"
+
+tf_select_or_new() {
+  tfws $1 || tfw new $1
+}
+
+# Docker (colima)
+export DOCKER_HOST="unix://$HOME/.colima/docker.sock"
+alias dockerstart="colima start"
+alias dockerstop="colima stop"
+alias dockerkill="docker kill \$(docker ps -a --format ' {{.ID}}') || echo 'No containers to kill' "
+alias dockerrm="docker rm \$(docker ps -a -q) || echo 'No containers to delete'"
+alias dockerrmi="docker rmi \$(docker image ls -qa) -f || echo 'No images to delete'"
+alias dockervp="docker volume prune"
+alias dockerkri="dockerkill && dockerrm && dockervp && dockerrmi"
+
+# User overrides (not managed — edit freely)
+source "$HOME/.localrc" 2>/dev/null

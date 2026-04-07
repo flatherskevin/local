@@ -3,6 +3,10 @@
 set -euo pipefail
 
 required_commands=(
+  claude
+  codex
+  colima
+  docker
   fd
   fzf
   git

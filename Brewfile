@@ -27,6 +27,10 @@ brew "terraform"
 brew "tflint"
 brew "yq"
 
+# Containers
+brew "colima"
+brew "docker"
+
 # Terminal UI
 cask "font-jetbrains-mono-nerd-font"
 cask "kitty"

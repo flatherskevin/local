@@ -64,6 +64,9 @@ if [[ -x "$(brew --prefix)/opt/fzf/install" ]]; then
   "$(brew --prefix)/opt/fzf/install" --all --no-bash --no-fish --no-update-rc
 fi
 
+log "Installing Claude Code and Codex CLI"
+npm install -g @anthropic-ai/claude-code @openai/codex
+
 log "Linking configs and helper scripts"
 "${REPO_ROOT}/scripts/link-configs.sh"
 
