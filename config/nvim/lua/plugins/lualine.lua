@@ -44,7 +44,7 @@ local function runtime_path()
   if type(detect) == "function" then
     local result = detect(root)
     if result then
-      return entry.label .. " - " .. result
+      return entry.label .. ":" .. result
     end
   elseif type(detect) == "string" then
     if vim.fn.isdirectory(root .. "/" .. detect) == 1 or vim.fn.filereadable(root .. "/" .. detect) == 1 then
