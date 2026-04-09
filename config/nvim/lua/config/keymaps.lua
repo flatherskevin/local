@@ -35,3 +35,22 @@ map("n", "<leader>fw", "<cmd>set wrap!<cr>", { desc = "Toggle wrap" })
 map("n", "<leader>ud", function()
   vim.diagnostic.enable(not vim.diagnostic.is_enabled())
 end, { desc = "Toggle diagnostics" })
+
+local function close_file_buffers(all)
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_is_loaded(buf) then
+      local ft = vim.bo[buf].filetype
+      local bt = vim.bo[buf].buftype
+      if bt == "" and ft ~= "neo-tree" then
+        if all or buf == vim.api.nvim_get_current_buf() then
+          Snacks.bufdelete({ buf = buf })
+        end
+      end
+    end
+  end
+end
+
+vim.api.nvim_create_user_command("Qf", function() close_file_buffers(false) end, {})
+vim.api.nvim_create_user_command("Qfile", function() close_file_buffers(false) end, {})
+vim.api.nvim_create_user_command("Qfall", function() close_file_buffers(true) end, {})
+vim.api.nvim_create_user_command("Qfiles", function() close_file_buffers(true) end, {})
