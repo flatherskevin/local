@@ -50,7 +50,5 @@ local function close_file_buffers(all)
   end
 end
 
-vim.api.nvim_create_user_command("Qf", function() close_file_buffers(false) end, {})
-vim.api.nvim_create_user_command("Qfile", function() close_file_buffers(false) end, {})
-vim.api.nvim_create_user_command("Qfall", function() close_file_buffers(true) end, {})
-vim.api.nvim_create_user_command("Qfiles", function() close_file_buffers(true) end, {})
+vim.api.nvim_create_user_command("QuitFile", function() close_file_buffers(false) end, {})
+vim.api.nvim_create_user_command("QuitFiles", function() close_file_buffers(true) end, {})
