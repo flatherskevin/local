@@ -35,3 +35,8 @@ opt.updatetime = 200
 opt.wrap = true
 opt.linebreak = true
 
+vim.diagnostic.config({
+  virtual_text = false,
+  virtual_lines = true,
+})
+
