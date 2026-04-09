@@ -89,4 +89,14 @@ return {
     },
     opts = {},
   },
+  {
+    "tpope/vim-fugitive",
+    cmd = { "Git", "Gdiffsplit", "Gvdiffsplit", "Glog", "Gblame" },
+    keys = {
+      { "<leader>gs", "<cmd>Git<cr>", desc = "Git status (fugitive)" },
+      { "<leader>gd", "<cmd>Gvdiffsplit<cr>", desc = "Git diff split" },
+      { "<leader>gb", "<cmd>Git blame<cr>", desc = "Git blame" },
+      { "<leader>gl", "<cmd>Gclog<cr>", desc = "Git log" },
+    },
+  },
 }
