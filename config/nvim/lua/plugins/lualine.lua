@@ -10,11 +10,11 @@ local function runtime_path()
       end
     end
     if venv then
-      return "./" .. venv:gsub("^" .. vim.pesc(root) .. "/", "")
+      return "Python - ./" .. venv:gsub("^" .. vim.pesc(root) .. "/", "")
     end
   elseif vim.tbl_contains({ "javascript", "typescript", "javascriptreact", "typescriptreact" }, buf_ft) then
     if vim.fn.isdirectory(root .. "/node_modules") == 1 then
-      return "./node_modules"
+      return buf_ft:gsub("^%l", string.upper) .. " - ./node_modules"
     end
   end
   return ""
