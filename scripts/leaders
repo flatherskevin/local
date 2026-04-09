@@ -1,0 +1,125 @@
+#!/opt/homebrew/bin/bash
+
+set -euo pipefail
+
+# Resolve nvim config — follow symlinks
+NVIM_CONFIG="$(readlink -f "${XDG_CONFIG_HOME:-$HOME/.config}/nvim")"
+
+# Colors
+BOLD='\033[1m'
+DIM='\033[2m'
+CYAN='\033[36m'
+YELLOW='\033[33m'
+GREEN='\033[32m'
+RED='\033[31m'
+RESET='\033[0m'
+
+header() {
+  printf '\n%b%b  %s%b\n' "$BOLD" "$CYAN" "$1" "$RESET"
+  printf '%b  %s%b\n' "$DIM" "$(printf '%.0s─' $(seq 1 ${#1}))" "$RESET"
+}
+
+entry() {
+  local key="$1" desc="$2" file="$3"
+  local pad=$((20 - ${#key}))
+  [[ $pad -lt 1 ]] && pad=1
+  local dots
+  dots=$(printf '%*s' "$pad" '' | tr ' ' '.')
+  printf '  %b%-s%b %b%s%b %-40s %b%s%b\n' \
+    "$BOLD$YELLOW" "$key" "$RESET" \
+    "$DIM" "$dots" "$RESET" \
+    "$desc" \
+    "$DIM" "$file" "$RESET"
+}
+
+conflict() {
+  local key="$1"
+  shift
+  printf '  %b%b  CONFLICT: %s%b\n' "$BOLD" "$RED" "$key" "$RESET"
+  for mapping in "$@"; do
+    printf '    %b→ %s%b\n' "$RED" "$mapping" "$RESET"
+  done
+}
+
+# Collect all leader mappings: key|description|source_file
+collect_leaders() {
+  while IFS= read -r -d '' f; do
+    local short="${f#"$NVIM_CONFIG"/}"
+    local matches
+    matches=$(grep -n '<leader>' "$f" 2>/dev/null || true)
+    [[ -z "$matches" ]] && continue
+
+    while IFS= read -r line; do
+      local key
+      key=$(echo "$line" | grep -oE '<leader>[^"'"'"']+' | head -1 || true)
+      [[ -z "$key" ]] && continue
+
+      local lineno
+      lineno=$(echo "$line" | cut -d: -f1)
+
+      # Try to find desc on the same line first
+      local desc
+      desc=$(echo "$line" | grep -oE 'desc[[:space:]]*=[[:space:]]*"[^"]*"' | sed 's/desc[[:space:]]*=[[:space:]]*"//;s/"$//' | head -1 || true)
+
+      # If no desc on this line, look ahead up to 5 lines
+      if [[ -z "$desc" ]]; then
+        local lookahead
+        lookahead=$(sed -n "$((lineno + 1)),$((lineno + 5))p" "$f" 2>/dev/null || true)
+        desc=$(echo "$lookahead" | grep -oE 'desc[[:space:]]*=[[:space:]]*"[^"]*"' | sed 's/desc[[:space:]]*=[[:space:]]*"//;s/"$//' | head -1 || true)
+      fi
+
+      [[ -z "$desc" ]] && desc="(no description)"
+
+      echo "${key}|${desc}|${short}:${lineno}"
+    done <<< "$matches"
+  done < <(find "$NVIM_CONFIG/lua" -name '*.lua' -type f -print0 2>/dev/null)
+}
+
+# Main
+printf '\n%b%b  Neovim Leader Key Mappings%b\n' "$BOLD" "$GREEN" "$RESET"
+printf '%b  Scanning: %s%b\n' "$DIM" "$NVIM_CONFIG" "$RESET"
+
+mapfile -t mappings < <(collect_leaders | sort -t'|' -k1,1)
+
+if [[ ${#mappings[@]} -eq 0 ]]; then
+  printf '\n  No leader mappings found.\n\n'
+  exit 0
+fi
+
+# Print all mappings
+header "All Leader Mappings"
+for m in "${mappings[@]}"; do
+  IFS='|' read -r key desc file <<< "$m"
+  entry "$key" "$desc" "$file"
+done
+
+# Check for conflicts (same key mapped more than once)
+header "Conflict Check"
+declare -A seen
+declare -A details
+has_conflict=false
+
+for m in "${mappings[@]}"; do
+  IFS='|' read -r key desc file <<< "$m"
+  if [[ -n "${seen[$key]+x}" ]]; then
+    seen[$key]=$(( ${seen[$key]} + 1 ))
+    details[$key]="${details[$key]}"$'\n'"${desc} (${file})"
+  else
+    seen[$key]=1
+    details[$key]="${desc} (${file})"
+  fi
+done
+
+for key in $(printf '%s\n' "${!seen[@]}" | sort); do
+  if [[ ${seen[$key]} -gt 1 ]]; then
+    has_conflict=true
+    mapfile -t entries <<< "${details[$key]}"
+    conflict "$key" "${entries[@]}"
+  fi
+done
+
+if ! $has_conflict; then
+  printf '  %b%b  No conflicts found%b\n' "$BOLD" "$GREEN" "$RESET"
+fi
+
+printf '\n'
