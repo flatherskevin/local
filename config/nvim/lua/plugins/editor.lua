@@ -81,4 +81,26 @@ return {
       vim.fn["mkdp#util#install"]()
     end,
   },
+  {
+    "MagicDuck/grug-far.nvim",
+    cmd = "GrugFar",
+    keys = {
+      { "<leader>sr", "<cmd>GrugFar<cr>", desc = "Search and Replace (grug-far)" },
+    },
+    opts = {},
+  },
+  {
+    "mg979/vim-visual-multi",
+    event = "VeryLazy",
+  },
+  {
+    "tpope/vim-fugitive",
+    cmd = { "Git", "Gdiffsplit", "Gvdiffsplit", "Glog", "Gblame" },
+    keys = {
+      { "<leader>gs", "<cmd>Git<cr>", desc = "Git status (fugitive)" },
+      { "<leader>gd", "<cmd>Gvdiffsplit<cr>", desc = "Git diff split" },
+      { "<leader>gb", "<cmd>Git blame<cr>", desc = "Git blame" },
+      { "<leader>gl", "<cmd>Gclog<cr>", desc = "Git log" },
+    },
+  },
 }

@@ -32,5 +32,6 @@ opt.termguicolors = true
 opt.timeoutlen = 300
 opt.undofile = true
 opt.updatetime = 200
-opt.wrap = false
+opt.wrap = true
+opt.linebreak = true
 

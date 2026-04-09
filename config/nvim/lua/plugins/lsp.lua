@@ -46,6 +46,12 @@ return {
   {
     "neovim/nvim-lspconfig",
     opts = {
+      diagnostics = {
+        virtual_text = false,
+        virtual_lines = false,
+        signs = true,
+        underline = true,
+      },
       servers = {
         bashls = {},
         gopls = {
@@ -72,6 +78,12 @@ return {
         },
         marksman = {},
         pyright = {
+          before_init = function(_, config)
+            local venv = config.root_dir .. "/.venv/bin/python"
+            if vim.fn.filereadable(venv) == 1 then
+              config.settings.python.pythonPath = venv
+            end
+          end,
           settings = {
             pyright = {
               disableOrganizeImports = true,
