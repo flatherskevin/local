@@ -53,6 +53,7 @@ alias tk='tmux ls -F "#{session_name}" | fzf --prompt="Kill session > " --height
 alias dev='~/.local/bin/dev'
 alias cheat='~/.local/bin/cheat'
 alias keys='cheat'
+alias leaders='~/.local/bin/leaders'
 
 workon() {
   dev "$@"

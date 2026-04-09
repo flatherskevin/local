@@ -1,23 +1,65 @@
+local runtime_map = {
+  python = {
+    label = "Python",
+    detect = function(root)
+      local venv = os.getenv("VIRTUAL_ENV")
+      if venv then
+        return "./" .. venv:gsub("^" .. vim.pesc(root) .. "/", "")
+      end
+      if vim.fn.filereadable(root .. "/.venv/bin/python") == 1 then
+        return "./.venv"
+      end
+    end,
+  },
+  javascript = { label = "JavaScript", detect = "node_modules" },
+  javascriptreact = { label = "JavaScript", detect = "node_modules" },
+  typescript = { label = "TypeScript", detect = "node_modules" },
+  typescriptreact = { label = "TypeScript", detect = "node_modules" },
+  go = { label = "Go", detect = "go.mod" },
+  rust = { label = "Rust", detect = "Cargo.toml" },
+  ruby = { label = "Ruby", detect = "Gemfile" },
+  java = { label = "Java", detect = "pom.xml" },
+  kotlin = { label = "Kotlin", detect = "build.gradle.kts" },
+  lua = { label = "Lua", detect = "lua" },
+  terraform = { label = "Terraform", detect = ".terraform" },
+  hcl = { label = "Terraform", detect = ".terraform" },
+  c = { label = "C", detect = "Makefile" },
+  cpp = { label = "C++", detect = "CMakeLists.txt" },
+  zig = { label = "Zig", detect = "build.zig" },
+  elixir = { label = "Elixir", detect = "mix.exs" },
+  dart = { label = "Dart", detect = "pubspec.yaml" },
+  swift = { label = "Swift", detect = "Package.swift" },
+  php = { label = "PHP", detect = "composer.json" },
+  cs = { label = "C#", detect = { "*.csproj", "*.sln" } },
+}
+
 local function runtime_path()
-  local buf_ft = vim.bo.filetype
+  local ft = vim.bo.filetype
+  local entry = runtime_map[ft]
+  if not entry then
+    return ""
+  end
   local root = vim.fn.getcwd()
-  if buf_ft == "python" then
-    local venv = os.getenv("VIRTUAL_ENV")
-    if not venv then
-      local candidate = root .. "/.venv/bin/python"
-      if vim.fn.filereadable(candidate) == 1 then
-        venv = root .. "/.venv"
+  local detect = entry.detect
+  if type(detect) == "function" then
+    local result = detect(root)
+    if result then
+      return entry.label .. " - " .. result
+    end
+  elseif type(detect) == "string" then
+    if vim.fn.isdirectory(root .. "/" .. detect) == 1 or vim.fn.filereadable(root .. "/" .. detect) == 1 then
+      return entry.label .. " - ./" .. detect
+    end
+  elseif type(detect) == "table" then
+    for _, pattern in ipairs(detect) do
+      local matches = vim.fn.glob(root .. "/" .. pattern, false, true)
+      if #matches > 0 then
+        local rel = matches[1]:gsub("^" .. vim.pesc(root) .. "/", "")
+        return entry.label .. " - ./" .. rel
       end
     end
-    if venv then
-      return "Python - ./" .. venv:gsub("^" .. vim.pesc(root) .. "/", "")
-    end
-  elseif vim.tbl_contains({ "javascript", "typescript", "javascriptreact", "typescriptreact" }, buf_ft) then
-    if vim.fn.isdirectory(root .. "/node_modules") == 1 then
-      return buf_ft:gsub("^%l", string.upper) .. " - ./node_modules"
-    end
   end
-  return ""
+  return entry.label
 end
 
 return {
