@@ -72,13 +72,17 @@ return {
         },
         marksman = {},
         pyright = {
+          before_init = function(_, config)
+            local venv = config.root_dir .. "/.venv/bin/python"
+            if vim.fn.filereadable(venv) == 1 then
+              config.settings.python.pythonPath = venv
+            end
+          end,
           settings = {
             pyright = {
               disableOrganizeImports = true,
             },
             python = {
-              venvPath = ".",
-              venv = ".venv",
               analysis = {
                 autoImportCompletions = true,
                 diagnosticMode = "workspace",
