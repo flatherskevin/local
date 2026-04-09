@@ -106,10 +106,7 @@ if [[ "${1:-}" == "--restart" ]]; then
   fi
   project="$(tmux display-message -p '#{session_path}')"
   old_session="$(tmux display-message -p '#S')"
-  session_name="$(sanitize_session_name "${project#$HOME/}")"
-  if [[ -z "$session_name" ]]; then
-    session_name="$(sanitize_session_name "$(basename "$project")")"
-  fi
+  session_name="$(sanitize_session_name "$(basename "$project")")"
   # Create new session first, switch to it, then kill the old one
   temp_name="${session_name}-restarting"
   create_session "$temp_name" "$project"
@@ -187,10 +184,7 @@ if [[ -z "$project" ]]; then
 fi
 
 project="${project%/}"
-session_name="$(sanitize_session_name "${project#$HOME/}")"
-if [[ -z "$session_name" ]]; then
-  session_name="$(sanitize_session_name "$(basename "$project")")"
-fi
+session_name="$(sanitize_session_name "$(basename "$project")")"
 
 if ! tmux has-session -t "$session_name" 2>/dev/null; then
   create_session "$session_name" "$project"
