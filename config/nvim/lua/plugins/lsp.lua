@@ -78,7 +78,7 @@ return {
             },
             python = {
               venvPath = ".",
-              pythonPath = ".venv/bin/python",
+              venv = ".venv",
               analysis = {
                 autoImportCompletions = true,
                 diagnosticMode = "workspace",
