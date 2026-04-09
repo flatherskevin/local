@@ -90,6 +90,10 @@ return {
     opts = {},
   },
   {
+    "mg979/vim-visual-multi",
+    event = "VeryLazy",
+  },
+  {
     "tpope/vim-fugitive",
     cmd = { "Git", "Gdiffsplit", "Gvdiffsplit", "Glog", "Gblame" },
     keys = {
