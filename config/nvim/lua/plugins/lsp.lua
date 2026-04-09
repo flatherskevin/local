@@ -77,6 +77,8 @@ return {
               disableOrganizeImports = true,
             },
             python = {
+              venvPath = ".",
+              pythonPath = ".venv/bin/python",
               analysis = {
                 autoImportCompletions = true,
                 diagnosticMode = "workspace",
