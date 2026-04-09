@@ -1,19 +1,18 @@
 local function runtime_path()
   local buf_ft = vim.bo.filetype
+  local root = vim.fn.getcwd()
   if buf_ft == "python" then
     local venv = os.getenv("VIRTUAL_ENV")
     if not venv then
-      local root = vim.fn.getcwd()
       local candidate = root .. "/.venv/bin/python"
       if vim.fn.filereadable(candidate) == 1 then
         venv = root .. "/.venv"
       end
     end
     if venv then
-      return venv:gsub(vim.fn.getcwd() .. "/", "")
+      return "./" .. venv:gsub("^" .. vim.pesc(root) .. "/", "")
     end
   elseif vim.tbl_contains({ "javascript", "typescript", "javascriptreact", "typescriptreact" }, buf_ft) then
-    local root = vim.fn.getcwd()
     if vim.fn.isdirectory(root .. "/node_modules") == 1 then
       return "./node_modules"
     end
