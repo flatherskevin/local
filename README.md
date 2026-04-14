@@ -37,6 +37,11 @@ cd ~/.flatherskevin/local
 ./bootstrap/macos.sh
 ```
 
+The bootstrap uses Homebrew Bundle and the repo's `Brewfile`, including the
+HashiCorp tap required for `terraform`. If `brew bundle` reports that no
+formula named `terraform` is available, update to the latest `main` branch
+before retrying.
+
 ## Tutorial
 
 For the actual usage guide, start here:
