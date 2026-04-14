@@ -64,8 +64,22 @@ if [[ -x "$(brew --prefix)/opt/fzf/install" ]]; then
   "$(brew --prefix)/opt/fzf/install" --all --no-bash --no-fish --no-update-rc
 fi
 
-log "Installing Claude Code and Codex CLI"
-npm install -g @anthropic-ai/claude-code @openai/codex
+install_npm_cli_if_missing() {
+  local package="$1"
+  local command_name="$2"
+
+  if command_exists "$command_name"; then
+    log "${command_name} already available at $(command -v "$command_name"); skipping npm install"
+    return 0
+  fi
+
+  log "Installing ${package}"
+  npm install -g "$package"
+}
+
+log "Installing Claude Code and Codex CLI when missing"
+install_npm_cli_if_missing "@anthropic-ai/claude-code" "claude"
+install_npm_cli_if_missing "@openai/codex" "codex"
 
 if [[ ! -d "$HOME/.tmux/plugins/tpm" ]]; then
   log "Installing tmux plugin manager (TPM)"
