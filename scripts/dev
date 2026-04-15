@@ -14,6 +14,9 @@ usage() {
 Usage:
   dev                Open the current Git repo, or pick a project directory
   dev /path/to/dir   Open or resume a tmux session for that directory
+  dev --list-session List tmux sessions managed by dev/tmux
+  dev --remove-session [name]
+                     Remove a tmux session by name, or pick one interactively
   dev --refresh      Re-apply layout and settings to the current tmux session
   dev --restart      Kill current session and start a fresh one for the same project
   dev --resume       Reopen all tmux sessions as Kitty tabs
@@ -65,6 +68,22 @@ pick_project() {
 
 current_git_project() {
   git rev-parse --show-toplevel 2>/dev/null || true
+}
+
+list_sessions() {
+  tmux list-sessions -F '#{session_name}' 2>/dev/null || true
+}
+
+pick_session() {
+  local sessions
+  sessions="$(list_sessions)"
+
+  if [[ -z "$sessions" ]]; then
+    printf 'No tmux sessions found\n' >&2
+    exit 1
+  fi
+
+  printf '%s\n' "$sessions" | fzf --prompt='Session > ' --height=50% --layout=reverse --border
 }
 
 reload_nvim() {
@@ -149,8 +168,31 @@ if [[ "${1:-}" == "--workspace" ]]; then
   exit 0
 fi
 
+if [[ "${1:-}" == "--list-session" ]]; then
+  sessions="$(list_sessions)"
+  if [[ -z "$sessions" ]]; then
+    printf 'No tmux sessions found\n' >&2
+    exit 1
+  fi
+  printf '%s\n' "$sessions"
+  exit 0
+fi
+
+if [[ "${1:-}" == "--remove-session" ]]; then
+  session_to_remove="${2:-}"
+  if [[ -z "$session_to_remove" ]]; then
+    session_to_remove="$(pick_session)"
+  fi
+  if [[ -z "$session_to_remove" ]]; then
+    exit 0
+  fi
+  tmux kill-session -t "$session_to_remove"
+  printf 'Removed tmux session: %s\n' "$session_to_remove"
+  exit 0
+fi
+
 if [[ "${1:-}" == "--resume" ]]; then
-  sessions="$(tmux list-sessions -F '#{session_name}' 2>/dev/null)"
+  sessions="$(list_sessions)"
   if [[ -z "$sessions" ]]; then
     printf 'No tmux sessions to resume\n' >&2
     exit 1
