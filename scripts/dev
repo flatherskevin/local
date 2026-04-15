@@ -12,7 +12,7 @@ done
 usage() {
   cat <<'EOF'
 Usage:
-  dev                Pick a project directory and open or resume a tmux session
+  dev                Open the current Git repo, or pick a project directory
   dev /path/to/dir   Open or resume a tmux session for that directory
   dev --refresh      Re-apply layout and settings to the current tmux session
   dev --restart      Kill current session and start a fresh one for the same project
@@ -28,6 +28,7 @@ sanitize_session_name() {
 
 list_roots() {
   local candidates=(
+    "$PWD"
     "$HOME/code"
     "$HOME/codebase"
     "$HOME/dev"
@@ -60,6 +61,10 @@ pick_project() {
   fi
 
   printf '%s\n' "$projects" | fzf --prompt='Project > ' --height=50% --layout=reverse --border
+}
+
+current_git_project() {
+  git rev-parse --show-toplevel 2>/dev/null || true
 }
 
 reload_nvim() {
@@ -176,7 +181,10 @@ if [[ -n "${1:-}" ]]; then
     exit 1
   fi
 else
-  project="$(pick_project)"
+  project="$(current_git_project)"
+  if [[ -z "$project" ]]; then
+    project="$(pick_project)"
+  fi
 fi
 
 if [[ -z "$project" ]]; then
