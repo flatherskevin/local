@@ -128,6 +128,23 @@ nvim
 
 Lazy will reinstall everything on next launch.
 
+### `brew bundle` fails with `No available formula with the name "terraform"`
+
+**Symptom**: Homebrew fails during bootstrap with an error like:
+
+```text
+Error: No available formula with the name "terraform".
+```
+
+**Fix**: This repo expects the HashiCorp Homebrew tap to be declared in the
+`Brewfile`. Update your checkout to the latest `main` so the `Brewfile`
+includes `tap "hashicorp/tap"` and installs `hashicorp/tap/terraform`, then
+rerun:
+
+```bash
+brew bundle --file Brewfile
+```
+
 ### tmux prefix does not work
 
 **Symptom**: `Ctrl-a` does nothing or sends a literal character.

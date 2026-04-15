@@ -1,3 +1,5 @@
+tap "hashicorp/tap"
+
 # Core shell and platform tools
 brew "awscli"
 brew "bash"
@@ -24,7 +26,7 @@ brew "go"
 brew "shellcheck"
 brew "shfmt"
 brew "stylua"
-brew "terraform"
+brew "hashicorp/tap/terraform"
 brew "tflint"
 brew "yq"
 
