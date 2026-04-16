@@ -60,6 +60,7 @@ On macOS this uses native-style install paths:
 For the actual usage guide, start here:
 
 - [`docs/README.md`](docs/README.md)
+- [`docs/ai/USAGE.md`](docs/ai/USAGE.md) for the canonical AI-facing operational guide
 
 That tutorial covers Neovim, tmux, kitty, the VS Code transition, and the
 crawl/walk/run learning path.
