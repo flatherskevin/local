@@ -1,3 +1,3 @@
 # Claude Guidance
 
-Read [`AGENTS.md`](AGENTS.md) only.
+Strictly follow [`AGENTS.md`](AGENTS.md).
