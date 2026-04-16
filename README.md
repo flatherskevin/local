@@ -9,31 +9,54 @@ This repo installs and maintains my local development environment.
 It uses `LazyVim` as the Neovim foundation and is designed for serious daily
 development across multiple repositories.
 
-## Install Paths
+## Quick Setup
 
-There are three supported ways to install this setup on macOS.
-
-### 1. Managed Install From GitHub via `curl`
+For most people, this is the right install path:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/flatherskevin/local/main/install.sh | bash
 ```
 
-### 2. Managed Install From GitHub via `wget`
-
-```bash
-wget -qO- https://raw.githubusercontent.com/flatherskevin/local/main/install.sh | bash
-```
-
-By default this installs or updates the managed checkout at
-`~/.flatherskevin/local` and runs the bootstrap flow.
+This is the managed install path. It installs or updates the managed checkout at
+`~/.flatherskevin/local`, runs the bootstrap flow, and links the shared core
+config into your real home directory.
 
 Each install run stages a fresh shallow clone of `main` under
 `~/.flatherskevin/releases`, bootstraps it, then atomically repoints the
 managed `~/.flatherskevin/local` symlink only after the new release succeeds.
 The previous successful release is kept for rollback.
 
-### 3. Managed Install From This Local Clone
+## Base Setup Only
+
+The base setup is the default behavior.
+
+If you want the shared core workflow and none of the optional personal
+additions:
+
+- use the quick setup command above
+- do not set `LOCAL_INSTALL_AI_CLI=1`
+- do not create `~/.config/zsh/personal.zsh`
+- do not add anything to `~/.localrc`
+
+What you get:
+
+- the managed core config under `config/` is linked into place
+- the standard `dev`, `cheat`, and `leaders` scripts are linked into `~/.local/bin`
+- the default Neovim, tmux, Kitty, and zsh workflow is installed
+
+What you do not get unless you opt in:
+
+- AI CLI installation
+- the optional aliases/functions from `config/zsh/personal.zsh`
+- any user-specific overrides from `~/.localrc`
+
+One important nuance: "base setup" here means the shared workflow defaults, not
+a minimal generic shell profile. The base zsh config is still opinionated and
+includes the repo's standard aliases and workflow commands.
+
+## Other Install Paths
+
+### Managed Install From This Local Clone
 
 If you are working on this repo itself and want to install from your current
 checkout instead of GitHub:
@@ -54,6 +77,11 @@ actual `~/.flatherskevin`, `~/.config`, and `~/.local/bin` links. It clones
 committed Git state from the current repo, so a dirty worktree triggers a
 warning because uncommitted changes are not included.
 
+Difference from quick setup:
+
+- quick setup installs from GitHub `main`
+- this path installs from your current local clone/ref
+
 ### Direct Bootstrap From A Clone
 
 This path is useful for manual setup and iteration, but it bypasses the managed
@@ -70,26 +98,10 @@ HashiCorp tap required for `terraform`. If `brew bundle` reports that no
 formula named `terraform` is available, update to the latest `main` branch
 before retrying.
 
-## Base Setup Only
+Difference from quick setup:
 
-The base setup is the default install path.
-
-To install the shared core workflow without optional personal additions:
-
-- run any of the install paths above without enabling AI tools
-- do not set `LOCAL_INSTALL_AI_CLI=1`
-- do not create `~/.config/zsh/personal.zsh`
-- do not add anything to `~/.localrc`
-
-What that means in practice:
-
-- managed core config is linked into place
-- `config/zsh/personal.zsh` exists in the repo as an optional example, but is not linked automatically
-- `~/.localrc` is sourced only if the user creates it
-
-One important nuance: "base setup" here means the shared core workflow, not a
-minimal generic shell profile. The base zsh config still includes the repo's
-opinionated aliases and workflow defaults.
+- quick setup gives you managed releases and rollback-safe updates
+- direct bootstrap runs from the clone in place and is better for manual iteration than long-term managed updates
 
 AI CLIs are optional. To install them during bootstrap, run:
 
