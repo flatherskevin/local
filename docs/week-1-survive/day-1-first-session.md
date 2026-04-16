@@ -7,12 +7,12 @@ Open a project with `dev` and get comfortable switching between the editor and t
 ## New Concepts
 
 - `dev` - fzf-powered project picker that creates a tmux session with Neovim on the left and a shell on the right
+- `dev session list` - show the exact tmux session names created by `dev`
 - `Ctrl-a h` - move to the left pane (Neovim)
 - `Ctrl-a l` - move to the right pane (shell)
 - `Ctrl-a z` - zoom the current pane to full screen (press again to unzoom)
 - `:q` - quit Neovim (type this inside Neovim in normal mode)
 - `ta` - alias for `tmux attach` (reattach to a session)
-- `tl` - alias for `tmux ls` (list active sessions)
 
 ## Exercises
 
@@ -54,8 +54,8 @@ Open a project with `dev` and get comfortable switching between the editor and t
 ### 6. Detach and reattach
 
 1. Press `Ctrl-a d` to detach from the tmux session. You are back at your bare Kitty prompt
-2. Type `tl` and press Enter. You should see your session listed
-3. Type `ta` and press Enter. You are back in your session exactly where you left off
+2. Type `dev session list` and press Enter. You should see your session listed
+3. Type `ta <session-name>` and press Enter. You are back in your session exactly where you left off
 
 ## Success Check
 
@@ -64,4 +64,4 @@ Open a project with `dev` and get comfortable switching between the editor and t
 - [ ] I can switch from the shell back to Neovim with `Ctrl-a h`
 - [ ] I can zoom a pane with `Ctrl-a z` and unzoom it again
 - [ ] I can run shell commands (ls, git status) in the right pane
-- [ ] I can detach with `Ctrl-a d` and reattach with `ta`
+- [ ] I can detach with `Ctrl-a d` and reattach after checking the session name with `dev session list`

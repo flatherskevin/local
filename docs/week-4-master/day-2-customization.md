@@ -9,7 +9,8 @@ Understand the config file structure and make your first personal customizations
 - **`config/nvim/`** -- Neovim configuration. LazyVim base with custom keymaps and plugins. The keymaps live in `config/nvim/lua/config/keymaps.lua`.
 - **`config/tmux/tmux.conf`** -- tmux configuration. Prefix key, bindings, status bar, and plugin settings.
 - **`config/kitty/kitty.conf`** -- Kitty terminal configuration. Font, colors, window behavior.
-- **`config/zsh/workflow.zsh`** -- shell aliases and functions. This is where `dev`, `v`, `lg`, `tl`, `ta`, `cheat`, and `keys` are defined.
+- **`config/zsh/zshrc`** -- shell aliases and functions. This is where `dev`, `v`, `lg`, `tl`, `ta`, `cheat`, and `keys` are defined.
+- **`config/zsh/personal.zsh`** -- optional personal extras for cloud, Python, Terraform, and Docker shortcuts.
 - **`Ctrl-a r`** -- reload tmux config without restarting.
 - **`source ~/.zshrc`** -- reload shell config to pick up new aliases.
 - **`:source %`** -- in Neovim, reload the current Lua file (useful when editing keymaps).

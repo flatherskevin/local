@@ -19,7 +19,7 @@ Use Kitty tabs to manage multiple repositories and switch between them without l
 
 ### 1. Open a Kitty tab and launch a project
 
-1. Open Kitty. You should have one tab
+1. Open Kitty. You should have one visible tab, and the tab bar stays visible so the active tmux session name is always on screen
 2. Type `dev` and select a project. You now have a tmux session with Neovim and a shell pane
 3. This is your first workstream. Leave it running
 

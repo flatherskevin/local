@@ -23,6 +23,8 @@ Those concerns are split by purpose so they stay maintainable.
 - [`scripts/`](../../scripts): helper entrypoints and validation
 - [`docs/`](../): human usage guides
 
+For agent-facing canonical docs, see [`../ai/`](../ai/).
+
 ## Why Not Put Everything In `.zshrc`
 
 Because `.zshrc` is the wrong place for:

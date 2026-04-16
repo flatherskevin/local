@@ -11,7 +11,7 @@ Learn to manage your terminal layout precisely and work across multiple projects
 - **`Ctrl-a +`** -- apply the even-vertical layout. All panes get equal height, stacked top to bottom.
 - **`Ctrl-a z`** -- zoom the current pane to fill the whole window. Press again to unzoom. Useful when you need full-screen focus on one pane.
 - **`Ctrl-a s`** -- open the session tree. Shows all sessions, windows, and panes. Use `j`/`k` to navigate, `Enter` to switch, arrow keys to expand/collapse.
-- **`dev` command** -- creates a tmux session named after the project directory. One session per project is the standard pattern.
+- **`dev` command** -- creates a tmux session for the project using a readable name plus a short stable suffix. One session per project is the standard pattern.
 
 ## Exercises
 
@@ -35,7 +35,7 @@ Learn to manage your terminal layout precisely and work across multiple projects
    ```
    dev
    ```
-   Pick a project from the fzf list. It creates a tmux session named after the project with Neovim and a shell pane.
+   Pick a project from the fzf list. It creates a tmux session for that project with Neovim and a shell pane.
 
 8. Open a second project. Open a new Kitty window or tab. Run `dev` again and pick a different project. You now have two tmux sessions, one per project.
 
@@ -47,11 +47,11 @@ Learn to manage your terminal layout precisely and work across multiple projects
 
 12. List sessions from outside tmux. Detach with `Ctrl-a d`. Run:
     ```
-    tl
+    dev session list
     ```
     All sessions are listed. Reattach to any one:
     ```
-    ta -t <session-name>
+    ta <session-name>
     ```
 
 13. Clean up. Kill the practice session:

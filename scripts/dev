@@ -12,21 +12,33 @@ done
 usage() {
   cat <<'EOF'
 Usage:
-  dev                Open the current Git repo, or pick a project directory
-  dev /path/to/dir   Open or resume a tmux session for that directory
-  dev --list-session List tmux sessions managed by dev/tmux
-  dev --remove-session [name]
-                     Remove a tmux session by name, or pick one interactively
-  dev --refresh      Re-apply layout and settings to the current tmux session
-  dev --restart      Kill current session and start a fresh one for the same project
-  dev --resume       Reopen all tmux sessions as Kitty tabs
-  dev --workspace F  Load a tmuxp workspace YAML file
+  dev [path]                       Open the current Git repo, or pick a project directory
+  dev install --local              Install your real setup from the current local clone
+  dev session list [--filter TEXT] List tmux sessions managed by dev/tmux
+  dev session kill -s NAME...      Kill one or more tmux sessions by name
+  dev --refresh                    Re-apply layout and settings to the current tmux session
+  dev --restart                    Kill current session and start a fresh one for the same project
+  dev --resume                     Reopen all tmux sessions as Kitty tabs
+  dev --workspace FILE             Load a tmuxp workspace YAML file
 EOF
 }
 
 sanitize_session_name() {
   local input="$1"
   printf '%s' "$input" | tr '/ .:@' '-----' | tr -cd '[:alnum:]_-'
+}
+
+session_hash() {
+  local input="$1"
+  printf '%s' "$input" | shasum -a 256 | cut -c1-6
+}
+
+session_name_for_project() {
+  local project="$1"
+  local base hash
+  base="$(sanitize_session_name "$(basename "$project")")"
+  hash="$(session_hash "$project")"
+  printf '%s-%s\n' "$base" "$hash"
 }
 
 list_roots() {
@@ -70,13 +82,34 @@ current_git_project() {
   git rev-parse --show-toplevel 2>/dev/null || true
 }
 
+current_git_branch() {
+  git symbolic-ref --quiet --short HEAD 2>/dev/null || printf 'HEAD\n'
+}
+
+warn_if_dirty_worktree() {
+  if ! git diff --quiet --ignore-submodules HEAD -- 2>/dev/null || [[ -n "$(git status --porcelain 2>/dev/null)" ]]; then
+    printf '[warning] local install testing clones committed Git state only; uncommitted changes are not included\n' >&2
+  fi
+}
+
 list_sessions() {
   tmux list-sessions -F '#{session_name}' 2>/dev/null || true
 }
 
+filter_sessions() {
+  local filter="${1:-}"
+
+  if [[ -z "$filter" ]]; then
+    list_sessions
+  else
+    list_sessions | grep -F "$filter" || true
+  fi
+}
+
 pick_session() {
+  local filter="${1:-}"
   local sessions
-  sessions="$(list_sessions)"
+  sessions="$(filter_sessions "$filter")"
 
   if [[ -z "$sessions" ]]; then
     printf 'No tmux sessions found\n' >&2
@@ -92,8 +125,6 @@ reload_nvim() {
   local pane_cmd
   pane_cmd="$(tmux display-message -t "$pane" -p '#{pane_current_command}' 2>/dev/null || true)"
   if [[ "$pane_cmd" == "nvim" || "$pane_cmd" == "vim" ]]; then
-    local project
-    project="$(tmux display-message -t "$pane" -p '#{pane_current_path}')"
     tmux send-keys -t "$pane" Escape ":silent! wa | qa!" C-m
     sleep 0.5
     tmux send-keys -t "$pane" "nvim" C-m
@@ -118,8 +149,201 @@ create_session() {
   tmux select-pane -t "${session}:1.2"
 }
 
+kitty_remote_available() {
+  command -v kitty >/dev/null 2>&1 && kitty @ ls >/dev/null 2>&1
+}
+
+set_current_tab_title() {
+  local title="$1"
+
+  if [[ -n "${KITTY_WINDOW_ID:-}" ]] && kitty_remote_available; then
+    kitty @ set-tab-title "$title" >/dev/null 2>&1 || true
+  fi
+}
+
+session_list_command() {
+  local filter=""
+  local sessions
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --filter)
+        filter="${2:-}"
+        if [[ -z "$filter" ]]; then
+          printf 'Usage: dev session list [--filter TEXT]\n' >&2
+          exit 1
+        fi
+        shift 2
+        ;;
+      -h|--help)
+        printf 'Usage: dev session list [--filter TEXT]\n'
+        exit 0
+        ;;
+      *)
+        printf 'Unknown option for session list: %s\n' "$1" >&2
+        exit 1
+        ;;
+    esac
+  done
+
+  sessions="$(list_sessions)"
+  if [[ -z "$sessions" ]]; then
+    printf 'No tmux sessions found\n' >&2
+    exit 1
+  fi
+
+  sessions="$(filter_sessions "$filter")"
+  printf '%s\n' "$sessions"
+}
+
+session_kill_command() {
+  local -a targets=()
+  local status=0
+  local target
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -s|--session)
+        if [[ -z "${2:-}" ]]; then
+          printf 'Usage: dev session kill --session NAME [--session NAME ...]\n' >&2
+          exit 1
+        fi
+        targets+=("$2")
+        shift 2
+        ;;
+      -h|--help)
+        printf 'Usage: dev session kill --session NAME [--session NAME ...]\n'
+        exit 0
+        ;;
+      *)
+        printf 'Unknown option for session kill: %s\n' "$1" >&2
+        exit 1
+        ;;
+    esac
+  done
+
+  if [[ ${#targets[@]} -eq 0 ]]; then
+    if [[ -t 0 && -t 1 ]]; then
+      targets+=("$(pick_session)")
+    else
+      printf 'Usage: dev session kill --session NAME [--session NAME ...]\n' >&2
+      exit 1
+    fi
+  fi
+
+  for target in "${targets[@]}"; do
+    if tmux has-session -t "$target" 2>/dev/null; then
+      tmux kill-session -t "$target"
+      printf 'Removed tmux session: %s\n' "$target"
+    else
+      printf 'No tmux session named: %s\n' "$target" >&2
+      status=1
+    fi
+  done
+
+  exit "$status"
+}
+
+install_local_command() {
+  local repo_root branch with_ai=0 install_base
+
+  repo_root="$(current_git_project)"
+  if [[ -z "$repo_root" ]]; then
+    printf 'dev install --local must be run from inside a Git repository\n' >&2
+    exit 1
+  fi
+
+  branch="$(current_git_branch)"
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --ref)
+        branch="${2:-}"
+        if [[ -z "$branch" ]]; then
+          printf 'Usage: dev install --local [--ref REF] [--with-ai]\n' >&2
+          exit 1
+        fi
+        shift 2
+        ;;
+      --with-ai)
+        with_ai=1
+        shift
+        ;;
+      -h|--help)
+        cat <<'EOF'
+Usage: dev install --local [--ref REF] [--with-ai]
+
+Defaults:
+  --ref       current Git branch
+
+Notes:
+  - Uses this local clone as the managed installer source.
+  - Clones committed Git state only; uncommitted changes are not included.
+EOF
+        exit 0
+        ;;
+      *)
+        printf 'Unknown option for dev install --local: %s\n' "$1" >&2
+        exit 1
+        ;;
+    esac
+  done
+
+  warn_if_dirty_worktree
+  install_base="${LOCAL_BASE_DIR:-$HOME/.flatherskevin}"
+
+  printf '[local-install] repo: %s\n' "$repo_root"
+  printf '[local-install] ref: %s\n' "$branch"
+  printf '[local-install] target home: %s\n' "$HOME"
+  printf '[local-install] install base: %s\n' "$install_base"
+
+  (
+    cd "$repo_root"
+    LOCAL_BASE_DIR="$install_base" \
+    LOCAL_REPO_URL="file://${repo_root}" \
+    LOCAL_INSTALL_REF="$branch" \
+    LOCAL_INSTALL_AI_CLI="$with_ai" \
+    ./install.sh
+  )
+}
+
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
   usage
+  exit 0
+fi
+
+if [[ "${1:-}" == "session" ]]; then
+  subcommand="${2:-}"
+  case "$subcommand" in
+    list)
+      shift 2
+      session_list_command "$@"
+      ;;
+    kill)
+      shift 2
+      session_kill_command "$@"
+      ;;
+    *)
+      printf 'Usage: dev session {list|kill} ...\n' >&2
+      exit 1
+      ;;
+  esac
+  exit 0
+fi
+
+if [[ "${1:-}" == "install" ]]; then
+  shift
+  if [[ "${1:-}" == "-h" || "${1:-}" == "--help" || -z "${1:-}" ]]; then
+    printf 'Usage: dev install --local [--ref REF] [--with-ai]\n'
+    exit 0
+  fi
+  if [[ "${1:-}" == "--local" ]]; then
+    shift
+    install_local_command "$@"
+  else
+    printf 'Usage: dev install --local [--ref REF] [--with-ai]\n' >&2
+    exit 1
+  fi
   exit 0
 fi
 
@@ -130,8 +354,7 @@ if [[ "${1:-}" == "--restart" ]]; then
   fi
   project="$(tmux display-message -p '#{session_path}')"
   old_session="$(tmux display-message -p '#S')"
-  session_name="$(sanitize_session_name "$(basename "$project")")"
-  # Create new session first, switch to it, then kill the old one
+  session_name="$(session_name_for_project "$project")"
   temp_name="${session_name}-restarting"
   create_session "$temp_name" "$project"
   tmux switch-client -t "$temp_name"
@@ -156,38 +379,18 @@ if [[ "${1:-}" == "--workspace" ]]; then
   fi
   tmuxp load -d "$ws_file"
 
-  # Get session names created by tmuxp from the YAML
   session_name="$(yq -r '.session_name' "$ws_file")"
   if [[ -z "$session_name" || "$session_name" == "null" ]]; then
     printf 'Could not read session_name from %s\n' "$ws_file" >&2
     exit 1
   fi
 
-  # Open a new Kitty OS window with the first session, then add tabs for the rest
-  kitty @ launch --type=os-window tmux attach-session -t "$session_name"
-  exit 0
-fi
-
-if [[ "${1:-}" == "--list-session" ]]; then
-  sessions="$(list_sessions)"
-  if [[ -z "$sessions" ]]; then
-    printf 'No tmux sessions found\n' >&2
+  if ! kitty_remote_available; then
+    printf 'Kitty remote control is unavailable; attach manually with: tmux attach-session -t %s\n' "$session_name" >&2
     exit 1
   fi
-  printf '%s\n' "$sessions"
-  exit 0
-fi
 
-if [[ "${1:-}" == "--remove-session" ]]; then
-  session_to_remove="${2:-}"
-  if [[ -z "$session_to_remove" ]]; then
-    session_to_remove="$(pick_session)"
-  fi
-  if [[ -z "$session_to_remove" ]]; then
-    exit 0
-  fi
-  tmux kill-session -t "$session_to_remove"
-  printf 'Removed tmux session: %s\n' "$session_to_remove"
+  kitty @ launch --type=os-window --tab-title "$session_name" tmux attach-session -t "$session_name"
   exit 0
 fi
 
@@ -197,7 +400,14 @@ if [[ "${1:-}" == "--resume" ]]; then
     printf 'No tmux sessions to resume\n' >&2
     exit 1
   fi
-  printf '%s\n' "$sessions" | xargs -I{} kitty @ launch --type=tab tmux attach-session -t {}
+  if ! kitty_remote_available; then
+    printf 'Kitty remote control is unavailable; attach sessions manually with tmux attach-session\n' >&2
+    exit 1
+  fi
+  while IFS= read -r session; do
+    [[ -z "$session" ]] && continue
+    kitty @ launch --type=tab --tab-title "$session" tmux attach-session -t "$session"
+  done <<< "$sessions"
   exit 0
 fi
 
@@ -234,7 +444,7 @@ if [[ -z "$project" ]]; then
 fi
 
 project="${project%/}"
-session_name="$(sanitize_session_name "$(basename "$project")")"
+session_name="$(session_name_for_project "$project")"
 
 if ! tmux has-session -t "$session_name" 2>/dev/null; then
   create_session "$session_name" "$project"
@@ -243,5 +453,6 @@ fi
 if [[ -n "${TMUX:-}" ]]; then
   tmux switch-client -t "$session_name"
 else
+  set_current_tab_title "$session_name"
   exec tmux attach-session -t "$session_name"
 fi

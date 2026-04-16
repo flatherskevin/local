@@ -3,10 +3,6 @@
 set -euo pipefail
 
 required_commands=(
-  claude
-  codex
-  colima
-  docker
   fd
   fzf
   git
@@ -24,16 +20,35 @@ required_commands=(
   yq
 )
 
+optional_commands=(
+  claude
+  codex
+  colima
+  docker
+)
+
 status=0
 
-for cmd in "${required_commands[@]}"; do
-  if command -v "$cmd" >/dev/null 2>&1; then
-    printf '[ok] %s\n' "$cmd"
-  else
-    printf '[missing] %s\n' "$cmd" >&2
-    status=1
-  fi
-done
+check_commands() {
+  local label="$1"
+  shift
+  local cmd
+
+  printf '[dotfiles] %s\n' "$label"
+  for cmd in "$@"; do
+    if command -v "$cmd" >/dev/null 2>&1; then
+      printf '[ok] %s\n' "$cmd"
+    else
+      printf '[missing] %s\n' "$cmd" >&2
+      if [[ "$label" == "Required tools" ]]; then
+        status=1
+      fi
+    fi
+  done
+}
+
+check_commands "Required tools" "${required_commands[@]}"
+check_commands "Optional tools" "${optional_commands[@]}"
 
 if nvim --headless "+quitall" >/dev/null 2>&1; then
   printf '[ok] Neovim starts cleanly\n'

@@ -48,21 +48,27 @@ alias v='nvim'
 alias vim='nvim'
 alias lg='lazygit'
 alias tl='tmux ls'
-alias ta='tmux attach -t'
-alias tk='tmux ls -F "#{session_name}" | fzf --prompt="Kill session > " --height=50% --layout=reverse --border | xargs -I{} tmux kill-session -t {}'
 alias dev='$HOME/.local/bin/dev'
 alias cheat='$HOME/.local/bin/cheat'
 alias keys='cheat'
 alias leaders='$HOME/.local/bin/leaders'
 
+ta() {
+  if [[ $# -lt 1 ]]; then
+    tmux attach
+    return
+  fi
+
+  if [[ -n "${KITTY_WINDOW_ID:-}" ]] && command -v kitty >/dev/null 2>&1; then
+    kitty @ set-tab-title "$1" >/dev/null 2>&1 || true
+  fi
+
+  tmux attach -t "$1"
+}
+
 workon() {
   dev "$@"
 }
-
-# AWS
-alias awsconfig="eval $EDITOR $HOME/.aws/config"
-alias awscredentials="eval $EDITOR $HOME/.aws/credentials"
-alias fixcreds="ssh-add -K $HOME/.ssh/id_rsa && ssh-add -K $HOME/.ssh/id_ed25519"
 
 # Git
 alias gitac="git add . && git commit -m"
@@ -81,51 +87,7 @@ alias gitc="git checkout"
 alias gitacfix="gitac \"Fixes per PR\" && gitpu"
 alias gitfc="git fetch && gitc"
 
-# Python
-alias venvactivate="source .venv/bin/activate &> /dev/null || source venv/bin/activate &> /dev/null || true"
-venvactivate
-alias venvcreate="uv venv ./.venv"
-alias venvall="venvcreate && venvactivate"
-alias venvpytest="./.venv/bin/pytest --cache-clear"
-alias venvpytestcov="pytest_coverage"
-alias pyi="uv pip install -r requirements.txt"
-alias pyfreeze="uv pip freeze > requirements.txt"
-
-pytest_coverage() {
-  venvpytest --cov=$1 --cov-report term-missing
-}
-
-# Golang
-alias gotest="go test -gcflags=all=-l ./..."
-alias gotestcov="gotest -coverprofile=coverage.out && go tool cover -html=coverage.out"
-
-# Terraform
-alias tf="terraform"
-alias tfa="terraform apply --auto-approve"
-alias tfp="terraform plan"
-alias tfw="terraform workspace"
-alias tfws="terraform workspace select"
-alias tfwsn="tf_select_or_new"
-alias tfwl="terraform workspace list"
-alias tfd="terraform destroy"
-alias tfi="terraform init"
-alias tft="terraform taint"
-alias tfr="terraform refresh"
-alias tfrmi="(rm -rf .terraform || true) && tfi"
-
-tf_select_or_new() {
-  tfws $1 || tfw new $1
-}
-
-# Docker (colima)
-export DOCKER_HOST="unix://$HOME/.colima/docker.sock"
-alias dockerstart="colima start"
-alias dockerstop="colima stop"
-alias dockerkill="docker kill \$(docker ps -a --format ' {{.ID}}') || echo 'No containers to kill' "
-alias dockerrm="docker rm \$(docker ps -a -q) || echo 'No containers to delete'"
-alias dockerrmi="docker rmi \$(docker image ls -qa) -f || echo 'No images to delete'"
-alias dockervp="docker volume prune"
-alias dockerkri="dockerkill && dockerrm && dockervp && dockerrmi"
+[[ -f "$HOME/.config/zsh/personal.zsh" ]] && source "$HOME/.config/zsh/personal.zsh"
 
 # User overrides (not managed — edit freely)
 source "$HOME/.localrc" 2>/dev/null
