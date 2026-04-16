@@ -3,6 +3,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck disable=SC2034
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 LOCAL_HOME="${LOCAL_BASE_DIR:-${HOME}/.flatherskevin}"
 BACKUP_DIR="${LOCAL_HOME}/backups/$(date +%Y%m%d-%H%M%S)"

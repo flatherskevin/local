@@ -3,8 +3,8 @@
 ## Install
 
 ```bash
-git clone --depth 1 --branch main https://github.com/flatherskevin/local.git ~/.flatherskevin/local
-cd ~/.flatherskevin/local
+git clone --depth 1 --branch main https://github.com/flatherskevin/local.git ~/codebase/local
+cd ~/codebase/local
 chmod +x bootstrap/macos.sh scripts/*.sh scripts/dev
 ./bootstrap/macos.sh
 ```
@@ -17,7 +17,29 @@ chmod +x bootstrap/macos.sh scripts/*.sh scripts/dev
 - symlinks config files into `~/.config` (nvim, tmux, kitty)
 - wires the workflow shell additions into `.zshrc`
 - installs Neovim plugins and language tooling via Lazy and Mason
+- optionally installs `claude` and `codex` when `LOCAL_INSTALL_AI_CLI=1`
+  using Anthropic's native installer for Claude Code and Homebrew cask for Codex on macOS
 - runs validation checks
+
+Managed installs through `install.sh` stage new releases under
+`~/.flatherskevin/releases` and only repoint `~/.flatherskevin/local` after the
+new release passes bootstrap.
+
+### Install From This Local Clone
+
+If you are working on this repo itself and want to install from the local clone
+instead of GitHub:
+
+```bash
+./scripts/dev install --local
+```
+
+That uses this local clone as the installer source and updates your real
+managed install under `~/.flatherskevin`.
+
+If your worktree is dirty, the command warns because it clones committed Git
+state only. Use `--ref <branch-or-tag>` to install from a different ref, or
+`--with-ai` to include the optional AI CLI installers.
 
 ## Validate
 
@@ -31,6 +53,7 @@ source ~/.zshrc
 A healthy run of `validate-setup.sh` looks like this:
 
 ```
+[dotfiles] Required tools
 [ok] fd
 [ok] fzf
 [ok] git
@@ -43,15 +66,21 @@ A healthy run of `validate-setup.sh` looks like this:
 [ok] terraform
 [ok] tflint
 [ok] tmux
+[ok] tmuxp
 [ok] uv
 [ok] yq
+[dotfiles] Optional tools
+[missing] claude
+[missing] codex
+[missing] colima
+[missing] docker
 [ok] Neovim starts cleanly
 [ok] tmux config loads cleanly
 [dotfiles] validation passed
 ```
 
-Every line should say `[ok]`. If any line says `[missing]`, that tool was not
-installed by the bootstrap or is not on your PATH.
+Missing required tools fail validation. Missing optional tools are reported so
+you know which extras are unavailable, but they do not fail the run.
 
 ## Validate Neovim
 

@@ -24,7 +24,8 @@ Learn the core tmux controls so you can split, navigate, and persist terminal se
    ```
    tmux new -s practice
    ```
-   You should see a green status bar at the bottom.
+   You should enter the session immediately. This config keeps the tmux status
+   line off because Kitty carries the outer tab/session identity.
 
 2. Split the pane horizontally. Press `Ctrl-a`, release, then press `|`. You now have two panes side by side.
 
@@ -44,13 +45,13 @@ Learn the core tmux controls so you can split, navigate, and persist terminal se
 
 10. Verify the session is running. Type:
     ```
-    tl
+    dev session list
     ```
     You should see `practice` listed with 2 windows.
 
 11. Reattach. Type:
     ```
-    ta -t practice
+    ta practice
     ```
     Everything is exactly as you left it. Your panes, windows, and shell history are all intact.
 

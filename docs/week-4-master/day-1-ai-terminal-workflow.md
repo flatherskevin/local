@@ -4,6 +4,10 @@
 
 Learn to use Claude Code as an AI-beside-editor tool with practical discipline.
 
+If `claude` is not installed yet, enable the optional AI tools during bootstrap
+with `LOCAL_INSTALL_AI_CLI=1 ~/.flatherskevin/local/bootstrap/macos.sh`, or
+install `@anthropic-ai/claude-code` yourself before starting this lesson.
+
 ## New Concepts
 
 - **AI-beside-editor pattern** -- Neovim on the left pane, Claude Code + shell on the right pane. The AI assists; you decide.

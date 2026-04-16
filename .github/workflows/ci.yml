@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  shell-and-docs:
+    runs-on: macos-15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install shell and docs tooling
+        run: brew install shellcheck
+
+      - name: Lint shell scripts
+        run: ./scripts/lint-shell.sh
+
+      - name: Validate markdown links
+        run: ./scripts/validate-doc-links.py
+
+      - name: Smoke test helper CLIs
+        run: ./scripts/smoke-test-cli.sh
+
+  runtime-smoke:
+    runs-on: macos-15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install repo dependencies
+        run: brew bundle --file Brewfile
+
+      - name: Install tmux plugin manager
+        run: |
+          if [[ ! -d "$HOME/.tmux/plugins/tpm" ]]; then
+            git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
+          fi
+
+      - name: Link configs
+        run: ./scripts/link-configs.sh
+
+      - name: Install Neovim stack
+        run: ./scripts/install-neovim-stack.sh
+
+      - name: Validate setup
+        run: ./scripts/validate-setup.sh
+
+  installer-smoke:
+    runs-on: macos-15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Create local CI branch for installer test
+        run: git branch -f ci-test "$GITHUB_SHA"
+
+      - name: Run managed installer flow
+        env:
+          LOCAL_BASE_DIR: ${{ runner.temp }}/local-home
+          LOCAL_REPO_URL: ${{ github.workspace }}
+          LOCAL_INSTALL_REF: ci-test
+        run: ./install.sh
+
+      - name: Validate installed release
+        env:
+          LOCAL_BASE_DIR: ${{ runner.temp }}/local-home
+        run: $LOCAL_BASE_DIR/local/scripts/validate-setup.sh

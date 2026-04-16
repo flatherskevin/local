@@ -52,8 +52,8 @@ remember it:
 1. Scans your code directories (`~/codebase`, `~/code`, `~/dev`, `~/src`,
    `~/work`, `~/workspace`) for git repositories.
 2. Opens an `fzf` picker so you can fuzzy-select the repo you want.
-3. Creates a tmux session named after the repo path (or reattaches to an
-   existing one).
+3. Creates a deterministic tmux session name from the repo plus a short stable
+   suffix (or reattaches to an existing one).
 4. Splits the tmux window into two panes: Neovim on the left, a shell on the
    right.
 5. Drops your cursor in the shell pane, ready to go.

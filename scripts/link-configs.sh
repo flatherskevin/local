@@ -20,4 +20,5 @@ link_path "${REPO_ROOT}/scripts/dev" "${HOME}/.local/bin/dev"
 link_path "${REPO_ROOT}/scripts/cheat" "${HOME}/.local/bin/cheat"
 link_path "${REPO_ROOT}/scripts/leaders" "${HOME}/.local/bin/leaders"
 
+# shellcheck disable=SC2016
 append_line_once "${HOME}/.zshrc" '[[ -f "$HOME/.config/zsh/zshrc" ]] && source "$HOME/.config/zsh/zshrc"'
