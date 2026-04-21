@@ -15,12 +15,10 @@ source $HOME/.poetry/env &> /dev/null || true
 export EDITOR="code -w"
 
 # Path to your oh-my-zsh installation.
-export ZSH="$HOME/.oh-my-zsh"
 export PAGER=
 ZSH_THEME="flatherskevin"
-
 plugins=(git)
-
+export ZSH="$HOME/.oh-my-zsh"
 source $ZSH/oh-my-zsh.sh
 
 alias cls="tput reset"
