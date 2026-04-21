@@ -5,12 +5,10 @@ export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$HOM
 export PATH="./node_modules/.bin:$PATH"
 
 # Path to your oh-my-zsh installation.
-export ZSH="$HOME/.oh-my-zsh"
 export PAGER=
 ZSH_THEME="flatherskevin"
-
 plugins=(git)
-
+export ZSH="$HOME/.oh-my-zsh"
 source $ZSH/oh-my-zsh.sh
 
 alias cls="tput reset"
