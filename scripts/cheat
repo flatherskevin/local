@@ -156,6 +156,62 @@ section_shell() {
   entry "cheat"          "This cheatsheet"
 }
 
+section_find_replace() {
+  header "Vim Find / Replace (no regex)"
+  entry ":%s/old/new/g"      "Replace all in file"
+  entry ":%s/old/new/gc"     "Replace all, confirm each"
+  entry ":s/old/new/g"       "Replace on current line"
+  entry "V + :s/old/new/g"   "Replace inside visual selection"
+  entry "* then cgn"         "Search word, change next match"
+  entry "."                  "Repeat last change (after cgn)"
+  entry ":noh"               "Clear search highlight"
+  entry "Ctrl-n"             "vim-visual-multi: cursor at next match"
+  entry "n / N (in VM)"      "Next / prev match"
+  entry "q / Q (in VM)"      "Skip / remove current cursor"
+  entry "<leader>sr"         "grug-far: project-wide find/replace UI"
+  entry "grug-far flags"     "Add --fixed-strings to disable regex"
+  entry "F2"                 "LSP rename symbol (cross-file, semantic)"
+}
+
+section_git_diff() {
+  header "Git Diff & History"
+  entry "]h / [h"            "Next / prev hunk (gitsigns)"
+  entry "<leader>ghp"        "Preview hunk inline (gitsigns)"
+  entry "<leader>ghs"        "Stage hunk (gitsigns)"
+  entry "<leader>ghr"        "Reset hunk (gitsigns)"
+  entry "<leader>ghd"        "Diff this file (gitsigns)"
+  entry "<leader>ghb"        "Blame current line (gitsigns)"
+  entry "<leader>gs"         "Fugitive: git status"
+  entry "<leader>gd"         "Fugitive: vertical diff split"
+  entry "<leader>gb"         "Fugitive: full-buffer blame"
+  entry "<leader>gl"         "Fugitive: commit log"
+  entry "F10"                "LazyGit (full TUI)"
+  entry "git diff"           "Working tree vs staged"
+  entry "git diff --staged"  "Staged vs HEAD"
+  entry "git diff main...HEAD" "Branch vs main (since merge base)"
+  entry "git diff HEAD~1"    "Vs previous commit"
+  entry "git diff --stat"    "Summary (files + line counts only)"
+}
+
+section_git_conflict() {
+  header "Git Conflict Resolution"
+  entry "<<<<<<< ======= >>>>>>>" "Conflict markers in-file"
+  entry "/<<<<<<<"           "Search to next conflict"
+  entry ":Gvdiffsplit!"      "Fugitive 3-way: HEAD //2 + incoming //3"
+  entry ":diffget //2"       "Take HEAD / target side"
+  entry ":diffget //3"       "Take incoming / merge side"
+  entry "]c / [c"            "Next / prev diff hunk (diff mode)"
+  entry "do / dp"            "Diff obtain / put (side-by-side)"
+  entry ":Gwrite"            "Save + stage resolved file"
+  entry "F10"                "LazyGit: 'M' on file = interactive resolver"
+  entry "git status"         "CLI: list conflicted files"
+  entry "git checkout --ours <f>"   "Keep our side wholesale"
+  entry "git checkout --theirs <f>" "Keep their side wholesale"
+  entry "git mergetool"      "Launch external mergetool"
+  entry "git merge --abort"  "Bail out, restore pre-merge state"
+  entry "git rerere"         "Reuse recorded resolutions next time"
+}
+
 show_all() {
   printf '\n%b%b  Terminal Workflow Cheatsheet%b\n' "$BOLD" "$GREEN" "$RESET"
   section_kitty
@@ -165,6 +221,9 @@ show_all() {
   section_neotree
   section_lsp
   section_vim
+  section_find_replace
+  section_git_diff
+  section_git_conflict
   section_shell
   printf '\n'
 }
@@ -173,7 +232,8 @@ usage() {
   cat <<'EOF'
 Usage: cheat [section]
 
-Sections: kitty, tmux, copy, nvim, neotree, lsp, vim, shell, all (default)
+Sections: kitty, tmux, copy, nvim, neotree, lsp, vim,
+          replace, gitdiff, conflict, shell, all (default)
 EOF
 }
 
@@ -185,6 +245,9 @@ case "${1:-all}" in
   neotree|tree|explorer) section_neotree; printf '\n' ;;
   lsp)            section_lsp; printf '\n' ;;
   vim)            section_vim; printf '\n' ;;
+  replace|findreplace|sub) section_find_replace; printf '\n' ;;
+  gitdiff|diff)   section_git_diff; printf '\n' ;;
+  conflict|gitconflict|merge) section_git_conflict; printf '\n' ;;
   shell|alias*)   section_shell; printf '\n' ;;
   all)            show_all | less -RFX ;;
   -h|--help)      usage ;;
