@@ -78,6 +78,10 @@ return {
         },
         marksman = {},
         pyright = {
+          root_dir = function(fname)
+            return require("lspconfig.util").root_pattern("pyrightconfig.json", ".git")(fname)
+              or vim.fn.getcwd()
+          end,
           before_init = function(_, config)
             local venv = config.root_dir .. "/.venv/bin/python"
             if vim.fn.filereadable(venv) == 1 then

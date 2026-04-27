@@ -12,8 +12,11 @@ ensure_dir "${HOME}/.oh-my-zsh/custom/themes"
 
 link_path "${REPO_ROOT}/config/nvim" "${HOME}/.config/nvim"
 link_path "${REPO_ROOT}/config/kitty/kitty.conf" "${HOME}/.config/kitty/kitty.conf"
+link_path "${REPO_ROOT}/config/kitty/themes/moonfly.conf" "${HOME}/.config/kitty/themes/moonfly.conf"
 link_path "${REPO_ROOT}/config/tmux/tmux.conf" "${HOME}/.config/tmux/tmux.conf"
+link_path "${REPO_ROOT}/config/tmux/themes/moonfly.tmux" "${HOME}/.config/tmux/themes/moonfly.tmux"
 link_path "${REPO_ROOT}/config/zsh/zshrc" "${HOME}/.config/zsh/zshrc"
+link_path "${REPO_ROOT}/config/zsh/personal.zsh" "${HOME}/.config/zsh/personal.zsh"
 link_path "${REPO_ROOT}/flatherskevin.zsh-theme" "${HOME}/.oh-my-zsh/custom/themes/flatherskevin.zsh-theme"
 
 link_path "${REPO_ROOT}/scripts/dev" "${HOME}/.local/bin/dev"

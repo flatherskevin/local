@@ -42,6 +42,8 @@ alias reload="source $HOME/.zshrc"
 alias codebase="cd $HOME/codebase"
 alias localconfig="eval $EDITOR $HOME/.localrc"
 alias localupdate="curl -fsSL https://raw.githubusercontent.com/flatherskevin/local/main/install.sh | bash"
+alias zshconfig="eval $EDITOR $HOME/.zshrc"
+alias zshtheme="eval $EDITOR $HOME/.oh-my-zsh/custom/themes/flatherskevin.zsh-theme"
 
 # Neovim / Tmux
 alias v='nvim'
