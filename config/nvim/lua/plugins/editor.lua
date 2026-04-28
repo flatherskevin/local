@@ -97,7 +97,7 @@ return {
   {
     "iamcco/markdown-preview.nvim",
     ft = { "markdown" },
-    build = "cd app && npm install",
+    build = "cd app && npx --yes yarn install",
   },
   {
     "MagicDuck/grug-far.nvim",
