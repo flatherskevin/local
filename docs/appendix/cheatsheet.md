@@ -10,8 +10,13 @@ cheat          # show all sections (piped through less)
 cheat kitty    # kitty terminal keys
 cheat tmux     # tmux keys (prefix: Ctrl-a)
 cheat nvim     # Neovim F-key mappings
+cheat neotree  # Neo-tree file explorer
 cheat lsp      # Neovim LSP navigation
+cheat diag     # diagnostics (show/hide/toggle)
 cheat vim      # Vim essentials
+cheat replace  # find and replace
+cheat gitdiff  # git diff and history
+cheat conflict # git conflict resolution
 cheat shell    # shell aliases
 keys           # alias for cheat
 ```
@@ -21,9 +26,9 @@ keys           # alias for cheat
 A script stays closer to the terminal where you actually work. You do not need
 to leave your session to look something up.
 
-The output uses color and formatting to make scanning fast. Single sections go
-directly to stdout. The full output pipes through `less -RFX` so it exits
-automatically if the content fits on screen.
+The output uses color and formatting to make scanning fast. All output goes
+directly to stdout so you can scroll freely in your terminal or tmux
+scrollback.
 
 ## Keeping It Updated
 
