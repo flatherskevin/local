@@ -36,6 +36,44 @@ map("n", "<leader>ud", function()
   vim.diagnostic.enable(not vim.diagnostic.is_enabled())
 end, { desc = "Toggle diagnostics" })
 
+-- VS Code-like shift+arrow selection
+map("n", "<S-Left>", "vh")
+map("n", "<S-Right>", "vl")
+map("n", "<S-Up>", "vk")
+map("n", "<S-Down>", "vj")
+map("v", "<S-Left>", "h")
+map("v", "<S-Right>", "l")
+map("v", "<S-Up>", "k")
+map("v", "<S-Down>", "j")
+map("i", "<S-Left>", "<Esc>vh")
+map("i", "<S-Right>", "<Esc>lvl")
+map("i", "<S-Up>", "<Esc>vk")
+map("i", "<S-Down>", "<Esc>lvj")
+
+-- Shift+Cmd (kitty sends Shift+Home/End) — select to line boundary
+map("n", "<S-Home>", "v0")
+map("n", "<S-End>", "v$")
+map("v", "<S-Home>", "0")
+map("v", "<S-End>", "$")
+map("i", "<S-Home>", "<Esc>v0")
+map("i", "<S-End>", "<Esc>lv$")
+
+-- Shift+Alt — select word
+map("n", "<M-S-Left>", "vb")
+map("n", "<M-S-Right>", "ve")
+map("v", "<M-S-Left>", "b")
+map("v", "<M-S-Right>", "e")
+map("i", "<M-S-Left>", "<Esc>vb")
+map("i", "<M-S-Right>", "<Esc>lve")
+
+-- Shift+Ctrl — select word
+map("n", "<C-S-Left>", "vb")
+map("n", "<C-S-Right>", "ve")
+map("v", "<C-S-Left>", "b")
+map("v", "<C-S-Right>", "e")
+map("i", "<C-S-Left>", "<Esc>vb")
+map("i", "<C-S-Right>", "<Esc>lve")
+
 local function close_file_buffers(all)
   for _, buf in ipairs(vim.api.nvim_list_bufs()) do
     if vim.api.nvim_buf_is_loaded(buf) then

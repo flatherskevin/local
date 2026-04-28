@@ -88,33 +88,49 @@ section_nvim_fkeys() {
 
 section_neotree() {
   header "Neo-tree (in explorer)"
+  entry "F8"        "Toggle Neo-tree (show/hide)"
+  entry "Enter"     "Open file / expand directory"
+  entry "Backspace" "Collapse directory / go to parent"
+  entry "W"         "Collapse all open directories"
+  entry "e"         "Toggle auto-expand width"
+  entry "P"         "Toggle preview"
   entry "a"         "Add file/directory"
   entry "d"         "Delete"
   entry "r"         "Rename"
+  entry "m"         "Move (rename with path)"
   entry "c / x / p" "Copy / cut / paste"
-  entry "y"         "Copy file path to clipboard"
-  entry "Y"         "Copy relative path"
-  entry "Enter"     "Open file"
+  entry "y"         "Copy absolute path to clipboard"
+  entry "Y / yp"    "Copy relative path to clipboard"
   entry "s"         "Open in vertical split"
   entry "S"         "Open in horizontal split"
   entry "H"         "Toggle hidden files"
+  entry "/"         "Filter / search nodes"
   entry "R"         "Refresh tree"
-  entry "?"         "Show help"
-  entry "F8"        "Hide/show Neo-tree"
+  entry "?"         "Show all Neo-tree keymaps"
 }
 
 section_lsp() {
-  header "Neovim LSP & Diagnostics"
+  header "Neovim LSP & Navigation"
   entry "gd"          "Go to definition"
   entry "gr"          "Find references"
+  entry "gI"          "Go to implementation"
+  entry "gy"          "Go to type definition"
   entry "K"           "Hover documentation"
-  entry "]d / [d"     "Next / previous diagnostic"
   entry "Ctrl-o"      "Jump back"
   entry "Ctrl-i"      "Jump forward"
-  entry "<leader>ud"  "Toggle diagnostics on/off"
-  entry "<leader>md"  "Toggle diagnostics (markdown)"
   entry "<leader>fp"  "Find project files"
   entry "<leader>fP"  "Search project text"
+}
+
+section_diagnostics() {
+  header "Neovim Diagnostics"
+  entry "]d / [d"     "Next / previous diagnostic"
+  entry "<leader>ud"  "Toggle all diagnostics on/off"
+  entry "<leader>md"  "Toggle diagnostics (prose buffers only)"
+  entry "<leader>cd"  "Line diagnostics float"
+  entry "<leader>xd"  "Document diagnostics (trouble)"
+  entry "<leader>xw"  "Workspace diagnostics (trouble)"
+  entry "<leader>xx"  "Toggle trouble list"
   entry "<leader>fw"  "Toggle word wrap"
 }
 
@@ -123,6 +139,8 @@ section_vim() {
   entry "i / a / o"    "Insert / append / open line"
   entry "Esc"          "Back to normal mode"
   entry ":w / :q / :wq" "Save / quit / save+quit"
+  entry ":QuitFile"    "Close current buffer (keeps Neo-tree)"
+  entry ":QuitFiles"   "Close all buffers (keeps Neo-tree)"
   entry "/ n N"        "Search, next, previous"
   entry "u / Ctrl-r"   "Undo / redo"
   entry "yy / dd / p"  "Yank line / delete line / paste"
@@ -220,6 +238,7 @@ show_all() {
   section_nvim_fkeys
   section_neotree
   section_lsp
+  section_diagnostics
   section_vim
   section_find_replace
   section_git_diff
@@ -232,8 +251,8 @@ usage() {
   cat <<'EOF'
 Usage: cheat [section]
 
-Sections: kitty, tmux, copy, nvim, neotree, lsp, vim,
-          replace, gitdiff, conflict, shell, all (default)
+Sections: kitty, tmux, copy, nvim, neotree, lsp, diag,
+          vim, replace, gitdiff, conflict, shell, all (default)
 EOF
 }
 
@@ -244,12 +263,13 @@ case "${1:-all}" in
   nvim|neovim|fkeys) section_nvim_fkeys; printf '\n' ;;
   neotree|tree|explorer) section_neotree; printf '\n' ;;
   lsp)            section_lsp; printf '\n' ;;
+  diag|diagnostics) section_diagnostics; printf '\n' ;;
   vim)            section_vim; printf '\n' ;;
   replace|findreplace|sub) section_find_replace; printf '\n' ;;
   gitdiff|diff)   section_git_diff; printf '\n' ;;
   conflict|gitconflict|merge) section_git_conflict; printf '\n' ;;
   shell|alias*)   section_shell; printf '\n' ;;
-  all)            show_all | less -RFX ;;
+  all)            show_all ;;
   -h|--help)      usage ;;
   *)
     printf 'Unknown section: %s\n\n' "$1" >&2

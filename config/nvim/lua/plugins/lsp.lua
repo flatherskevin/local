@@ -53,7 +53,9 @@ return {
         underline = true,
       },
       servers = {
-        bashls = {},
+        bashls = {
+          filetypes = { "sh", "bash", "zsh", "ksh", "dash", "csh" },
+        },
         gopls = {
           settings = {
             gopls = {

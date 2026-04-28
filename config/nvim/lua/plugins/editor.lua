@@ -32,6 +32,26 @@ return {
         width = function()
           return math.floor(vim.o.columns / 5)
         end,
+        mappings = {
+          ["y"] = function(state)
+            local node = state.tree:get_node()
+            local path = node:get_id()
+            vim.fn.setreg("+", path)
+            vim.notify("Copied: " .. path)
+          end,
+          ["Y"] = function(state)
+            local node = state.tree:get_node()
+            local path = vim.fn.fnamemodify(node:get_id(), ":.")
+            vim.fn.setreg("+", path)
+            vim.notify("Copied: " .. path)
+          end,
+          ["yp"] = function(state)
+            local node = state.tree:get_node()
+            local path = vim.fn.fnamemodify(node:get_id(), ":.")
+            vim.fn.setreg("+", path)
+            vim.notify("Copied: " .. path)
+          end,
+        },
       },
     },
   },
@@ -77,9 +97,7 @@ return {
   {
     "iamcco/markdown-preview.nvim",
     ft = { "markdown" },
-    build = function()
-      vim.fn["mkdp#util#install"]()
-    end,
+    build = "cd app && npm install",
   },
   {
     "MagicDuck/grug-far.nvim",
@@ -92,6 +110,12 @@ return {
   {
     "mg979/vim-visual-multi",
     event = "VeryLazy",
+    init = function()
+      vim.g.VM_maps = {
+        ["Add Cursor Down"] = "<M-S-Down>",
+        ["Add Cursor Up"] = "<M-S-Up>",
+      }
+    end,
   },
   {
     "tpope/vim-fugitive",
