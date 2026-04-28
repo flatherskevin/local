@@ -32,6 +32,26 @@ return {
         width = function()
           return math.floor(vim.o.columns / 5)
         end,
+        mappings = {
+          ["y"] = function(state)
+            local node = state.tree:get_node()
+            local path = node:get_id()
+            vim.fn.setreg("+", path)
+            vim.notify("Copied: " .. path)
+          end,
+          ["Y"] = function(state)
+            local node = state.tree:get_node()
+            local path = vim.fn.fnamemodify(node:get_id(), ":.")
+            vim.fn.setreg("+", path)
+            vim.notify("Copied: " .. path)
+          end,
+          ["yp"] = function(state)
+            local node = state.tree:get_node()
+            local path = vim.fn.fnamemodify(node:get_id(), ":.")
+            vim.fn.setreg("+", path)
+            vim.notify("Copied: " .. path)
+          end,
+        },
       },
     },
   },
