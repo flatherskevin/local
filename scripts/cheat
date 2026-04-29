@@ -154,6 +154,84 @@ section_vim() {
   entry "Ctrl-h/j/k/l" "Move between splits"
 }
 
+section_commenting() {
+  header "Commenting"
+  entry "gcc"             "Toggle comment on current line"
+  entry "gc{motion}"      "Toggle comment over motion (e.g. gcap)"
+  entry "gcip"            "Comment inner paragraph / block"
+  entry "V then gc"       "Comment visual selection"
+  entry "gco"             "Add comment on line below"
+  entry "gcO"             "Add comment on line above"
+  entry "gcA"             "Add comment at end of line"
+}
+
+section_text_objects() {
+  header "Text Objects, Surround & Indent"
+  entry "ciw / diw / yiw" "Change / delete / yank inner word"
+  entry "ci\" / di\" / yi\"" "Change / delete / yank inside quotes"
+  entry "ci( / di( / yi(" "Change / delete / yank inside parens"
+  entry "ci{ / di{ / yi{" "Change / delete / yank inside braces"
+  entry "cit / dit / yit" "Change / delete / yank inside HTML tag"
+  entry "cap / dap / yap" "Change / delete / yank paragraph"
+  entry "vi{ / vib"       "Select inside braces / parens"
+  entry "va{ / vab"       "Select around braces / parens (incl. delims)"
+  entry "vat / vit"       "Select around / inside HTML/XML tag"
+  entry "ysiw)"           "Surround word with parens"
+  entry "ysiw\""          "Surround word with double quotes"
+  entry "ysa\"}"          "Wrap quoted string with braces"
+  entry "ds\""            "Delete surrounding double quotes"
+  entry "cs\"'"           "Change double quotes to single quotes"
+  entry "S) (visual)"     "Surround visual selection with parens"
+  entry "yss)"            "Surround entire line with parens"
+  entry ">>"              "Indent current line"
+  entry "<<"              "Unindent current line"
+  entry ">ap"             "Indent paragraph"
+  entry "V then > / <"    "Indent / unindent visual selection"
+  entry "=ap"             "Auto-indent paragraph"
+  entry "gg=G"            "Auto-indent entire file"
+}
+
+section_buffers() {
+  header "Buffers & Windows"
+  entry "F7"              "Switch buffer (fuzzy picker)"
+  entry "<S-h> / <S-l>"   "Previous / next buffer (bufferline)"
+  entry "[b / ]b"         "Previous / next buffer"
+  entry "<leader>bd"      "Delete current buffer"
+  entry ":QuitFile"       "Close current buffer (keeps Neo-tree)"
+  entry ":QuitFiles"      "Close all buffers (keeps Neo-tree)"
+  entry "<leader>bp"      "Toggle pin buffer"
+  entry "<leader>bP"      "Delete non-pinned buffers"
+  entry ":vs / :sp"       "Vertical / horizontal split"
+  entry "Ctrl-h/j/k/l"   "Move between splits"
+  entry "Ctrl-w ="        "Equalize split sizes"
+  entry "Ctrl-w _ / |"    "Maximize height / width"
+  entry "Ctrl-w r"        "Rotate splits"
+  entry "Ctrl-w T"        "Move split to new tab"
+  entry "Ctrl-w o"        "Close all other splits"
+}
+
+section_marks_registers_macros() {
+  header "Marks, Registers & Macros"
+  entry "m{a-z}"          "Set local mark"
+  entry "'{a-z}"          "Jump to mark (line)"
+  entry "\`{a-z}"         "Jump to mark (exact position)"
+  entry "m{A-Z}"          "Set global mark (across files)"
+  entry "'{A-Z}"          "Jump to global mark"
+  entry "''"              "Jump back to last jump position"
+  entry "'."              "Jump to last edit position"
+  entry ":marks"          "List all marks"
+  entry "\"{a-z}y{motion}" "Yank into register {a-z}"
+  entry "\"{a-z}p"        "Paste from register {a-z}"
+  entry "\"+y / \"+p"     "Yank / paste system clipboard"
+  entry "\"0p"            "Paste last yank (not last delete)"
+  entry ":reg"            "View all register contents"
+  entry "q{a-z}"          "Record macro into register {a-z}"
+  entry "q"               "Stop recording"
+  entry "@{a-z}"          "Play macro from register"
+  entry "@@"              "Replay last macro"
+  entry "5@a"             "Play macro 'a' five times"
+}
+
 section_shell() {
   header "Shell Aliases & Commands"
   entry "dev"            "Open project picker / tmux session"
@@ -232,17 +310,21 @@ section_git_conflict() {
 
 show_all() {
   printf '\n%b%b  Terminal Workflow Cheatsheet%b\n' "$BOLD" "$GREEN" "$RESET"
-  section_kitty
-  section_tmux
-  section_tmux_copy
-  section_nvim_fkeys
-  section_neotree
-  section_lsp
-  section_diagnostics
   section_vim
+  section_text_objects
+  section_buffers
+  section_commenting
+  section_lsp
   section_find_replace
+  section_diagnostics
+  section_neotree
   section_git_diff
   section_git_conflict
+  section_marks_registers_macros
+  section_nvim_fkeys
+  section_tmux
+  section_tmux_copy
+  section_kitty
   section_shell
   printf '\n'
 }
@@ -251,23 +333,28 @@ usage() {
   cat <<'EOF'
 Usage: cheat [section]
 
-Sections: kitty, tmux, copy, nvim, neotree, lsp, diag,
-          vim, replace, gitdiff, conflict, shell, all (default)
+Sections: vim, textobj, buffers, comment, lsp, replace, diag, neotree,
+          gitdiff, conflict, marks, nvim, tmux, copy, kitty, shell,
+          all (default)
 EOF
 }
 
 case "${1:-all}" in
-  kitty)          section_kitty; printf '\n' ;;
-  tmux)           section_tmux; printf '\n' ;;
-  copy)           section_tmux_copy; printf '\n' ;;
-  nvim|neovim|fkeys) section_nvim_fkeys; printf '\n' ;;
-  neotree|tree|explorer) section_neotree; printf '\n' ;;
-  lsp)            section_lsp; printf '\n' ;;
-  diag|diagnostics) section_diagnostics; printf '\n' ;;
   vim)            section_vim; printf '\n' ;;
+  textobj|text-objects|surround|indent) section_text_objects; printf '\n' ;;
+  buffers|buffer|windows|window|splits) section_buffers; printf '\n' ;;
+  comment|commenting)       section_commenting; printf '\n' ;;
+  lsp)            section_lsp; printf '\n' ;;
   replace|findreplace|sub) section_find_replace; printf '\n' ;;
+  diag|diagnostics) section_diagnostics; printf '\n' ;;
+  neotree|tree|explorer) section_neotree; printf '\n' ;;
   gitdiff|diff)   section_git_diff; printf '\n' ;;
   conflict|gitconflict|merge) section_git_conflict; printf '\n' ;;
+  marks|registers|macros|macro|mark|reg) section_marks_registers_macros; printf '\n' ;;
+  nvim|neovim|fkeys) section_nvim_fkeys; printf '\n' ;;
+  tmux)           section_tmux; printf '\n' ;;
+  copy)           section_tmux_copy; printf '\n' ;;
+  kitty)          section_kitty; printf '\n' ;;
   shell|alias*)   section_shell; printf '\n' ;;
   all)            show_all ;;
   -h|--help)      usage ;;
