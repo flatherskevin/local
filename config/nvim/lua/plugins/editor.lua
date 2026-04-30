@@ -97,7 +97,17 @@ return {
   {
     "iamcco/markdown-preview.nvim",
     ft = { "markdown" },
-    build = "cd app && npx --yes yarn install",
+    keys = {
+      { "<leader>mp", "<cmd>MarkdownPreviewToggle<cr>", desc = "Markdown Preview toggle" },
+    },
+    -- Plugin ships a stale Mermaid bundle and calls the v10-only mermaid.init() API.
+    -- Swap in latest Mermaid v11 and rewrite that one call site to mermaid.run().
+    build = table.concat({
+      "cd app",
+      "npx --yes yarn install",
+      "curl -fsSL -o _static/mermaid.min.js https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js",
+      [[find out/_next/static -name 'index.js' -exec sed -i.bak 's|mermaid\.init(void 0,document\.querySelectorAll(".mermaid"))|mermaid.run({nodes:document.querySelectorAll(".mermaid")})|g' {} +]],
+    }, " && "),
   },
   {
     "MagicDuck/grug-far.nvim",
