@@ -97,7 +97,11 @@ return {
   {
     "iamcco/markdown-preview.nvim",
     ft = { "markdown" },
-    build = "cd app && npx --yes yarn install",
+    keys = {
+      { "<leader>mp", "<cmd>MarkdownPreviewToggle<cr>", desc = "Markdown Preview toggle" },
+    },
+    -- Pin Mermaid to 10.9.3: plugin hardcodes the v10 mermaid.init() API (removed in v11).
+    build = "cd app && npx --yes yarn install && curl -fsSL -o _static/mermaid.min.js https://cdn.jsdelivr.net/npm/mermaid@10.9.3/dist/mermaid.min.js",
   },
   {
     "MagicDuck/grug-far.nvim",
