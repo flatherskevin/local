@@ -54,6 +54,18 @@ One important nuance: "base setup" here means the shared workflow defaults, not
 a minimal generic shell profile. The base zsh config is still opinionated and
 includes the repo's standard aliases and workflow commands.
 
+## Personal Additions
+
+To opt into the optional personal aliases (AWS, Python, Terraform, Docker,
+Golang shortcuts), run:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/flatherskevin/local/main/config/zsh/personal.zsh -o ~/.config/zsh/personal.zsh
+```
+
+The managed zshrc sources this file automatically if it exists. No restart
+required — just `source ~/.zshrc` or open a new terminal.
+
 ## Other Install Paths
 
 ### Managed Install From This Local Clone
