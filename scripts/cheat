@@ -143,7 +143,9 @@ section_vim() {
   entry ":w / :q / :wq" "Save / quit / save+quit"
   entry ":QuitFile"    "Close current buffer (keeps Neo-tree)"
   entry ":QuitFiles"   "Close all buffers (keeps Neo-tree)"
-  entry "/ n N"        "Search, next, previous"
+  entry "/"            "Search in file (then n/N to navigate)"
+  entry "F5"           "Search in project (grep)"
+  entry "F6"           "Find file by name"
   entry "u / Ctrl-r"   "Undo / redo"
   entry "yy / dd / p"  "Yank line / delete line / paste"
   entry "ciw"          "Change inner word"
@@ -152,7 +154,6 @@ section_vim() {
   entry "gg"           "Go to top of page"
   entry "G"            "Go to bottom of page"
   entry "%"            "Jump to matching bracket"
-  entry "*"            "Search word under cursor"
   entry ":vs / :sp"    "Vertical / horizontal split"
   entry "Ctrl-h/j/k/l" "Move between splits"
 }
@@ -256,17 +257,29 @@ section_shell() {
 }
 
 section_search() {
-  header "Search"
-  entry "/"               "Search forward in file"
-  entry "?"               "Search backward in file"
-  entry "n / N"           "Next / previous match"
+  header "Search In File"
+  entry "/"               "Search forward — type pattern, press Enter"
+  entry "?"               "Search backward"
+  entry "n"               "Jump to next match"
+  entry "N"               "Jump to previous match"
   entry "*"               "Search word under cursor (forward)"
   entry "#"               "Search word under cursor (backward)"
   entry ":noh"            "Clear search highlight"
-  entry "F5"              "Search in project (grep)"
-  entry "<leader>fP"      "Search project text (rooted)"
+  entry "gn"              "Select next match (visual) — combine with c/d/y"
+  entry "cgn"             "Change next match — then . to repeat"
+
+  header "Search In Project"
+  entry "F5"              "Live grep across all files (snacks picker)"
+  entry "<leader>fP"      "Live grep (project root)"
   entry "F6"              "Find files by name"
-  entry "<leader>fp"      "Find project files (rooted)"
+  entry "<leader>fp"      "Find files by name (project root)"
+
+  header "Search Tips"
+  entry "\\c / \\C"        "Force case-insensitive / case-sensitive"
+  entry "\\<word\\>"       "Match whole word only"
+  entry "\\v"              "Very magic — regex without escaping ()|+"
+  entry "* then cgn then ." "Fast workflow: find word, change, repeat"
+  entry "F5 then filter"  "Grep picker narrows live as you type"
 }
 
 section_find_replace() {
@@ -328,11 +341,11 @@ section_git_conflict() {
 show_all() {
   printf '\n%b%b  Terminal Workflow Cheatsheet%b\n' "$BOLD" "$GREEN" "$RESET"
   section_vim
+  section_search
   section_text_objects
   section_buffers
   section_commenting
   section_lsp
-  section_search
   section_find_replace
   section_diagnostics
   section_neotree
