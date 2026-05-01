@@ -17,6 +17,12 @@ For most people, this is the right install path:
 curl -fsSL https://raw.githubusercontent.com/flatherskevin/local/main/install.sh | bash
 ```
 
+If you also want to install my personal zsh aliases and shortcuts (AWS, Python, Terraform, Docker, Golang):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/flatherskevin/local/main/config/zsh/personal.zsh -o ~/.config/zsh/personal.zsh
+```
+
 This is the managed install path. It installs or updates the managed checkout at
 `~/.flatherskevin/local`, runs the bootstrap flow, and links the shared core
 config into your real home directory.
@@ -53,18 +59,6 @@ What you do not get unless you opt in:
 One important nuance: "base setup" here means the shared workflow defaults, not
 a minimal generic shell profile. The base zsh config is still opinionated and
 includes the repo's standard aliases and workflow commands.
-
-## Personal Additions
-
-To opt into the optional personal aliases (AWS, Python, Terraform, Docker,
-Golang shortcuts), run:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/flatherskevin/local/main/config/zsh/personal.zsh -o ~/.config/zsh/personal.zsh
-```
-
-The managed zshrc sources this file automatically if it exists. No restart
-required — just `source ~/.zshrc` or open a new terminal.
 
 ## Other Install Paths
 
