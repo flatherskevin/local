@@ -37,7 +37,7 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 
 # General
-alias cls="tput reset"
+alias cls="printf '\033[2J\033[3J\033[H'"
 alias reload="source $HOME/.zshrc"
 alias codebase="cd $HOME/codebase"
 alias localconfig="eval $EDITOR $HOME/.localrc"

@@ -11,7 +11,7 @@ plugins=(git)
 export ZSH="$HOME/.oh-my-zsh"
 source $ZSH/oh-my-zsh.sh
 
-alias cls="tput reset"
+alias cls="printf '\033[2J\033[3J\033[H'"
 alias awsconfig="eval $EDITOR $HOME/.aws/config"
 alias awscredentials="eval $EDITOR $HOME/.aws/credentials"
 alias fixcreds="ssh-add -K $HOME/.ssh/id_rsa && ssh-add -K $HOME/.ssh/id_ed25519"
