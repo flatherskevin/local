@@ -17,6 +17,12 @@ For most people, this is the right install path:
 curl -fsSL https://raw.githubusercontent.com/flatherskevin/local/main/install.sh | bash
 ```
 
+If you also want to install my personal zsh aliases and shortcuts (AWS, Python, Terraform, Docker, Golang):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/flatherskevin/local/main/config/zsh/personal.zsh -o ~/.config/zsh/personal.zsh
+```
+
 This is the managed install path. It installs or updates the managed checkout at
 `~/.flatherskevin/local`, runs the bootstrap flow, and links the shared core
 config into your real home directory.
