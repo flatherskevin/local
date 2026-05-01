@@ -69,7 +69,8 @@ section_tmux_copy() {
   entry "Double-click"  "Select word"
   entry "Triple-click"  "Select line"
   entry "Click"         "Clear selection (stays in copy mode)"
-  entry "Esc / q"       "Exit copy mode"
+  entry "Esc"            "Clear selection (stay in copy mode)"
+  entry "q"              "Exit copy mode"
 }
 
 section_nvim_fkeys() {
@@ -254,6 +255,20 @@ section_shell() {
   entry "cheat"          "This cheatsheet"
 }
 
+section_search() {
+  header "Search"
+  entry "/"               "Search forward in file"
+  entry "?"               "Search backward in file"
+  entry "n / N"           "Next / previous match"
+  entry "*"               "Search word under cursor (forward)"
+  entry "#"               "Search word under cursor (backward)"
+  entry ":noh"            "Clear search highlight"
+  entry "F5"              "Search in project (grep)"
+  entry "<leader>fP"      "Search project text (rooted)"
+  entry "F6"              "Find files by name"
+  entry "<leader>fp"      "Find project files (rooted)"
+}
+
 section_find_replace() {
   header "Vim Find / Replace (no regex)"
   entry ":%s/old/new/g"      "Replace all in file"
@@ -317,6 +332,7 @@ show_all() {
   section_buffers
   section_commenting
   section_lsp
+  section_search
   section_find_replace
   section_diagnostics
   section_neotree
@@ -335,9 +351,9 @@ usage() {
   cat <<'EOF'
 Usage: cheat [section]
 
-Sections: vim, textobj, buffers, comment, lsp, replace, diag, neotree,
-          gitdiff, conflict, marks, nvim, tmux, copy, kitty, shell,
-          all (default)
+Sections: vim, textobj, buffers, comment, lsp, search, replace, diag,
+          neotree, gitdiff, conflict, marks, nvim, tmux, copy, kitty,
+          shell, all (default)
 EOF
 }
 
@@ -347,6 +363,7 @@ case "${1:-all}" in
   buffers|buffer|windows|window|splits) section_buffers; printf '\n' ;;
   comment|commenting)       section_commenting; printf '\n' ;;
   lsp)            section_lsp; printf '\n' ;;
+  search|find)    section_search; printf '\n' ;;
   replace|findreplace|sub) section_find_replace; printf '\n' ;;
   diag|diagnostics) section_diagnostics; printf '\n' ;;
   neotree|tree|explorer) section_neotree; printf '\n' ;;
