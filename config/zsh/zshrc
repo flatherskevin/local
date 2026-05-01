@@ -50,6 +50,7 @@ alias v='nvim'
 alias vim='nvim'
 alias lg='lazygit'
 alias tl='tmux ls'
+alias tmks='tmux kill-session'
 alias dev='$HOME/.local/bin/dev'
 alias cheat='$HOME/.local/bin/cheat'
 alias keys='cheat'
@@ -88,6 +89,21 @@ alias gitrebc="git rebase --continue"
 alias gitc="git checkout"
 alias gitacfix="gitac \"Fixes per PR\" && gitpu"
 alias gitfc="git fetch && gitc"
+alias gitwls="git worktree list"
+
+_gitwadd() {
+  local repo_path="$1" branch="$2"
+  if [[ -z "$branch" ]]; then
+    echo "usage: gitwadd<repo> <branch-name>" >&2
+    return 1
+  fi
+  local worktree_path="${repo_path%/}-worktrees/$branch"
+  if git -C "$repo_path" show-ref --verify --quiet "refs/heads/$branch"; then
+    git -C "$repo_path" worktree add "$worktree_path" "$branch"
+  else
+    git -C "$repo_path" worktree add -b "$branch" "$worktree_path"
+  fi
+}
 
 [[ -f "$HOME/.config/zsh/personal.zsh" ]] && source "$HOME/.config/zsh/personal.zsh"
 
