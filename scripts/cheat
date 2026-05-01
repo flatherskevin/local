@@ -138,13 +138,13 @@ section_diagnostics() {
 
 section_vim() {
   header "Vim Essentials"
+  entry "/"            "Search in file (then n/N to navigate)"
+  entry "F5"           "Search in project (grep)"
   entry "i / a / o"    "Insert / append / open line"
   entry "Esc"          "Back to normal mode"
   entry ":w / :q / :wq" "Save / quit / save+quit"
   entry ":QuitFile"    "Close current buffer (keeps Neo-tree)"
   entry ":QuitFiles"   "Close all buffers (keeps Neo-tree)"
-  entry "/"            "Search in file (then n/N to navigate)"
-  entry "F5"           "Search in project (grep)"
   entry "F6"           "Find file by name"
   entry "u / Ctrl-r"   "Undo / redo"
   entry "yy / dd / p"  "Yank line / delete line / paste"
