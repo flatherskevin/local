@@ -47,10 +47,6 @@ companion_name() {
   printf '%s+%s\n' "$parent" "$slot"
 }
 
-is_companion() {
-  [[ "$1" =~ \+[0-9]+$ ]]
-}
-
 parent_of_session() {
   local name="$1"
   printf '%s\n' "${name%+[0-9]*}"
@@ -229,13 +225,13 @@ parse_picker_selection() {
 
 # Decides what `dev more` should do. Prints "NEW", the chosen companion name, or
 # nothing (when the picker is cancelled). Falls back to "NEW" when nothing is
-# detached or when fzf is unavailable.
+# detached.
 pick_companion_action() {
   local parent="$1" next_slot="$2"
   local detached menu name panes selection
   detached="$(detached_companions "$parent")"
 
-  if [[ -z "$detached" ]] || ! command -v fzf >/dev/null 2>&1; then
+  if [[ -z "$detached" ]]; then
     printf 'NEW\n'
     return 0
   fi
@@ -404,6 +400,7 @@ session_kill_command() {
   local status=0
   local target
   local companion
+  local killed=" "
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -438,12 +435,17 @@ session_kill_command() {
   for target in "${targets[@]}"; do
     if tmux has-session -t "$target" 2>/dev/null; then
       tmux kill-session -t "$target"
+      killed+="$target "
       printf 'Removed tmux session: %s\n' "$target"
       while IFS= read -r companion; do
         [[ -z "$companion" ]] && continue
-        tmux kill-session -t "$companion" 2>/dev/null \
-          && printf 'Removed companion session: %s\n' "$companion"
+        if tmux kill-session -t "$companion" 2>/dev/null; then
+          killed+="$companion "
+          printf 'Removed companion session: %s\n' "$companion"
+        fi
       done < <(companions_of "$target")
+    elif [[ "$killed" == *" $target "* ]]; then
+      : # already removed earlier this run (e.g. cascaded as a companion); not an error
     else
       printf 'No tmux session named: %s\n' "$target" >&2
       status=1

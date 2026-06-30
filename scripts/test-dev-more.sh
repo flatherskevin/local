@@ -39,11 +39,6 @@ check_status() {
 check "companion_name basic" "repo-56e811+1" "$(companion_name "repo-56e811" 1)"
 check "companion_name two digit" "repo-56e811+12" "$(companion_name "repo-56e811" 12)"
 
-# --- is_companion ---
-check_status "is_companion true" 0 is_companion "repo-56e811+2"
-check_status "is_companion false (parent)" 1 is_companion "repo-56e811"
-check_status "is_companion false (plus no digit)" 1 is_companion "repo-56e811+x"
-
 # --- parent_of_session ---
 check "parent_of_session strips suffix" "repo-56e811" "$(parent_of_session "repo-56e811+3")"
 check "parent_of_session passthrough" "repo-56e811" "$(parent_of_session "repo-56e811")"
@@ -58,21 +53,21 @@ repo-56e811+3" "$(companions_of "repo-56e811")"
 check "next_companion_slot fills gap" "2" "$(next_companion_slot "repo-56e811")"
 check "next_companion_slot first free" "2" "$(next_companion_slot "other-abc123")"
 
-list_sessions() { printf '%s\n' "repo-56e811"; }
-check "next_companion_slot none used" "1" "$(next_companion_slot "repo-56e811")"
-
 # --- parse_picker_selection (use $'\t' so the tab is unambiguous) ---
 check "parse_picker_selection NEW" "NEW" "$(parse_picker_selection $'NEW\t* New companion (+3)')"
 check "parse_picker_selection name" "repo-56e811+1" "$(parse_picker_selection $'repo-56e811+1\t+1 . 4 panes')"
 check "parse_picker_selection empty" "" "$(parse_picker_selection "")"
 
-# --- session listing groups companions under their parent (via sort) ---
-group_sample="$(printf '%s\n' "repo-56e811+2" "other-abc123" "repo-56e811" "repo-56e811+1" | sort)"
+# --- session_list_command groups companions directly under their parent ---
+list_sessions() { printf '%s\n' "repo-56e811+2" "other-abc123" "repo-56e811" "repo-56e811+1"; }
 group_expected="other-abc123
 repo-56e811
 repo-56e811+1
 repo-56e811+2"
-check "companion grouping sort order" "$group_expected" "$group_sample"
+check "session_list_command groups companions" "$group_expected" "$(session_list_command)"
+
+list_sessions() { printf '%s\n' "repo-56e811"; }
+check "next_companion_slot none used" "1" "$(next_companion_slot "repo-56e811")"
 
 # --- create_companion_session (tmux-backed; skipped without tmux) ---
 if command -v tmux >/dev/null 2>&1; then
@@ -89,8 +84,8 @@ if command -v tmux >/dev/null 2>&1; then
 
   # A 4-pane tiled layout is always a 2x2 grid: two distinct column offsets and
   # two distinct row offsets. A wrong layout (e.g. main-vertical) would give 3 rows.
-  distinct_left="$(tmux list-panes -t "${test_companion}:1" -F '#{pane_left}' | sort -u | wc -l | tr -d ' ')"
-  distinct_top="$(tmux list-panes -t "${test_companion}:1" -F '#{pane_top}' | sort -u | wc -l | tr -d ' ')"
+  distinct_left="$(tmux list-panes -t "${test_companion}:1" -F '#{pane_left}' 2>/dev/null | sort -u | wc -l | tr -d ' ')"
+  distinct_top="$(tmux list-panes -t "${test_companion}:1" -F '#{pane_top}' 2>/dev/null | sort -u | wc -l | tr -d ' ')"
   check "create_companion_session tiled 2x2 (2 columns)" "2" "$distinct_left"
   check "create_companion_session tiled 2x2 (2 rows)" "2" "$distinct_top"
 
@@ -103,6 +98,27 @@ if command -v tmux >/dev/null 2>&1; then
   trap - EXIT
 else
   printf '[skip] create_companion_session (tmux not available)\n'
+fi
+
+# --- regression: `dev session kill` with parent AND companion listed together
+#     must succeed (exit 0) with no false "No tmux session named" error.
+if command -v tmux >/dev/null 2>&1; then
+  kp="devmorekilltest-$$"
+  tmux new-session -d -s "$kp" -c "$HOME" 2>/dev/null
+  tmux new-session -d -s "${kp}+1" -c "$HOME" 2>/dev/null
+  tmux new-session -d -s "${kp}+2" -c "$HOME" 2>/dev/null
+  trap 'for s in "$kp" "${kp}+1" "${kp}+2"; do tmux kill-session -t "$s" 2>/dev/null || true; done' EXIT
+
+  kill_rc=0
+  kill_out="$("${SCRIPT_DIR}/dev" session kill -s "$kp" -s "${kp}+1" 2>&1)" || kill_rc=$?
+  check "session kill parent+companion exits 0" "0" "$kill_rc"
+  check "session kill parent+companion no false error" "" "$(printf '%s\n' "$kill_out" | grep 'No tmux session named' || true)"
+  check_status "session kill cascaded +2 also gone" 1 tmux has-session -t "${kp}+2"
+
+  for s in "$kp" "${kp}+1" "${kp}+2"; do tmux kill-session -t "$s" 2>/dev/null || true; done
+  trap - EXIT
+else
+  printf '[skip] session kill parent+companion regression (tmux not available)\n'
 fi
 
 printf '\n%d run, %d failed\n' "$tests_run" "$tests_failed"

@@ -246,7 +246,7 @@ section_shell() {
   entry "dev --restart"   "Kill and restart current session"
   entry "dev --resume"    "Reopen all sessions as Kitty tabs"
   entry "dev --workspace" "Load tmuxp workspace YAML"
-  entry "dev more"          "Open a new Kitty tab of terminals for a workstream"
+  entry "dev more"       "Open a new Kitty tab of terminals for a workstream"
   entry "v / vim"        "Open Neovim"
   entry "lg"             "Open LazyGit"
   entry "tl"             "List tmux sessions"
