@@ -396,13 +396,14 @@ session_list_command() {
   fi
 
   sessions="$(filter_sessions "$filter")"
-  printf '%s\n' "$sessions"
+  printf '%s\n' "$sessions" | sort
 }
 
 session_kill_command() {
   local -a targets=()
   local status=0
   local target
+  local companion
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -438,6 +439,11 @@ session_kill_command() {
     if tmux has-session -t "$target" 2>/dev/null; then
       tmux kill-session -t "$target"
       printf 'Removed tmux session: %s\n' "$target"
+      while IFS= read -r companion; do
+        [[ -z "$companion" ]] && continue
+        tmux kill-session -t "$companion" 2>/dev/null \
+          && printf 'Removed companion session: %s\n' "$companion"
+      done < <(companions_of "$target")
     else
       printf 'No tmux session named: %s\n' "$target" >&2
       status=1

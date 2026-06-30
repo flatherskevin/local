@@ -66,6 +66,14 @@ check "parse_picker_selection NEW" "NEW" "$(parse_picker_selection $'NEW\t* New 
 check "parse_picker_selection name" "repo-56e811+1" "$(parse_picker_selection $'repo-56e811+1\t+1 . 4 panes')"
 check "parse_picker_selection empty" "" "$(parse_picker_selection "")"
 
+# --- session listing groups companions under their parent (via sort) ---
+group_sample="$(printf '%s\n' "repo-56e811+2" "other-abc123" "repo-56e811" "repo-56e811+1" | sort)"
+group_expected="other-abc123
+repo-56e811
+repo-56e811+1
+repo-56e811+2"
+check "companion grouping sort order" "$group_expected" "$group_sample"
+
 # --- create_companion_session (tmux-backed; skipped without tmux) ---
 if command -v tmux >/dev/null 2>&1; then
   test_parent="devmoretest-$$"
