@@ -307,6 +307,12 @@ EOF
   )
 }
 
+# When this file is sourced (e.g. by scripts/test-dev-more.sh) rather than
+# executed, stop here so only the function definitions above are loaded.
+if [[ "${BASH_SOURCE[0]:-}" != "${0}" ]]; then
+  return 0
+fi
+
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
   usage
   exit 0
