@@ -42,6 +42,7 @@ Primary workflow commands:
 - `dev /path/to/project`
 - `dev session list [--filter TEXT]`
 - `dev session kill -s NAME...`
+- `dev more [--session NAME]`
 - `dev --refresh`
 - `dev --restart`
 - `dev --resume`
@@ -71,6 +72,11 @@ named repos do not collide.
 
 Kitty tab titles are expected to surface the active tmux session name. tmux
 status remains off.
+
+For more terminal room in a workstream, `dev more` opens another Kitty tab of equally
+sized terminals backed by a companion session named `<session>+<n>`. Companions persist
+when their tab is closed and can be resumed from the `dev more` picker; killing the
+parent session with `dev session kill` also removes its companions.
 
 ## AI Tooling
 
