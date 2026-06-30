@@ -41,6 +41,42 @@ session_name_for_project() {
   printf '%s-%s\n' "$base" "$hash"
 }
 
+companion_name() {
+  local parent="$1" slot="$2"
+  printf '%s+%s\n' "$parent" "$slot"
+}
+
+is_companion() {
+  [[ "$1" =~ \+[0-9]+$ ]]
+}
+
+parent_of_session() {
+  local name="$1"
+  printf '%s\n' "${name%+[0-9]*}"
+}
+
+companions_of() {
+  local parent="$1"
+  list_sessions | grep -E "^${parent}\+[0-9]+$" || true
+}
+
+next_companion_slot() {
+  local parent="$1"
+  local name slots n
+  # Collect used slot numbers (no associative arrays; macOS ships bash 3.2).
+  slots="$(
+    while IFS= read -r name; do
+      [[ -z "$name" ]] && continue
+      printf '%s\n' "${name##*+}"
+    done < <(companions_of "$parent") | sort -n
+  )"
+  n=1
+  while printf '%s\n' "$slots" | grep -qx "$n"; do
+    n=$((n + 1))
+  done
+  printf '%s\n' "$n"
+}
+
 list_roots() {
   local candidates=(
     "$PWD"
