@@ -185,6 +185,20 @@ create_session() {
   tmux select-pane -t "${session}:1.2"
 }
 
+create_companion_session() {
+  local session="$1" project="$2" count="$3"
+  local i
+  tmux new-session -d -s "$session" -c "$project"
+  for ((i = 1; i < count; i++)); do
+    tmux split-window -c "$project" -t "${session}:1"
+    tmux select-layout -t "${session}:1" tiled
+  done
+  tmux source-file ~/.config/tmux/tmux.conf
+  tmux select-layout -t "${session}:1" tiled
+  tmux set-hook -t "$session" window-resized "select-layout tiled"
+  tmux select-pane -t "${session}:1.1"
+}
+
 kitty_remote_available() {
   command -v kitty >/dev/null 2>&1 && kitty @ ls >/dev/null 2>&1
 }
