@@ -89,16 +89,14 @@ not.
 ## Project directory resolution
 
 Companion panes must open in the parent's project directory, but the session name is a
-one-way hash of that path and cannot be reversed. To resolve it, record the project
-path on the parent session at creation time and read it back when building a companion:
+one-way hash of that path and cannot be reversed. The script already solves this in
+`--restart`, which reads a session's working directory with
+`tmux display-message -p '#{session_path}'`. Reuse that established pattern: resolve the
+parent's project directory with `tmux display-message -p -t "<parent>" '#{session_path}'`.
 
-- In the existing `create_session`, add `tmux set-environment -t "$session"
-  DEV_PROJECT "$project"`.
-- In `dev more`, read it via `tmux show-environment -t "<parent>" DEV_PROJECT`.
-
-This is robust against cd-ing around inside panes. If the variable is missing (for
-example a session created before this change), fall back to the parent's first pane
-current path.
+This needs no change to `create_session`, since the parent session is created with
+`-c "<project>"` and `#{session_path}` reports that directory (verified on tmux 3.6a).
+If the value is ever empty, fall back to the parent's active `#{pane_current_path}`.
 
 ## Lifecycle and cleanup
 
@@ -122,16 +120,27 @@ current path.
 
 ## Testing
 
-- Factor the pure logic into small, testable functions: companion-name formatting,
-  lowest-free-slot allocation, and parent-from-companion-name parsing. Unit-test these
-  without tmux or kitty.
-- Add a tmux smoke test (tmux runs headless) that creates a parent plus a companion and
-  asserts the pane count and that the layout is `tiled`, with `kitty @ launch` stubbed.
-- Match whatever test harness the repo already uses, or add `bats` if there is none.
+The repo has no unit-test framework; its only automated check is
+`scripts/smoke-test-cli.sh` (runs `--help` on each command), plus `shellcheck` via
+`scripts/lint-shell.sh` and a doc-link validator. Tests for this feature follow that
+plain-bash style:
+
+- Add a `BASH_SOURCE` guard before the dispatch block in `scripts/dev` so the file can
+  be sourced (to load its functions) without running the command.
+- Add `scripts/test-dev-more.sh` (same plain-bash assertion style as
+  `smoke-test-cli.sh`). It sources `scripts/dev` and unit-tests the pure helpers:
+  companion-name formatting, parent-from-companion-name parsing, lowest-free-slot
+  allocation (stubbing `list_sessions`), and picker-selection parsing.
+- The same script includes a tmux-backed check, guarded by `command -v tmux`, that
+  creates a parent plus a companion and asserts the pane count and that the layout is
+  `tiled`. It is skipped when tmux is unavailable.
 
 ## Files touched
 
-- `scripts/dev`: new `more` subcommand and helpers; one line added to `create_session`
-  for `DEV_PROJECT`; cascade in `session kill`; grouping in `session list`.
-- Tests (harness confirmed during planning).
-- A short README or docs note describing `dev more`.
+- `scripts/dev`: a `BASH_SOURCE` guard so the file is sourceable for tests; new `more`
+  subcommand and helpers; cascade in `session kill`; grouping in `session list`;
+  updated `usage()` help text.
+- `scripts/test-dev-more.sh`: new test script for the pure helpers plus the tmux-backed
+  layout check.
+- `scripts/cheat` and `docs/ai/USAGE.md`: document `dev more`, plus
+  `docs/appendix/cheatsheet.md` if it lists dev commands.
