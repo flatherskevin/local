@@ -61,6 +61,11 @@ check "next_companion_slot first free" "2" "$(next_companion_slot "other-abc123"
 list_sessions() { printf '%s\n' "repo-56e811"; }
 check "next_companion_slot none used" "1" "$(next_companion_slot "repo-56e811")"
 
+# --- parse_picker_selection (use $'\t' so the tab is unambiguous) ---
+check "parse_picker_selection NEW" "NEW" "$(parse_picker_selection $'NEW\t* New companion (+3)')"
+check "parse_picker_selection name" "repo-56e811+1" "$(parse_picker_selection $'repo-56e811+1\t+1 . 4 panes')"
+check "parse_picker_selection empty" "" "$(parse_picker_selection "")"
+
 # --- create_companion_session (tmux-backed; skipped without tmux) ---
 if command -v tmux >/dev/null 2>&1; then
   test_parent="devmoretest-$$"

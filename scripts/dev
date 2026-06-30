@@ -16,6 +16,7 @@ Usage:
   dev install --local              Install your real setup from the current local clone
   dev session list [--filter TEXT] List tmux sessions managed by dev/tmux
   dev session kill -s NAME...      Kill one or more tmux sessions by name
+  dev more [--session NAME]        Open a new Kitty tab of terminals for a workstream
   dev --refresh                    Re-apply layout and settings to the current tmux session
   dev --restart                    Kill current session and start a fresh one for the same project
   dev --resume                     Reopen all tmux sessions as Kitty tabs
@@ -211,6 +212,158 @@ set_current_tab_title() {
   fi
 }
 
+# Detached companions of PARENT, reusing the tested companions_of helper.
+detached_companions() {
+  local parent="$1" name attached
+  while IFS= read -r name; do
+    [[ -z "$name" ]] && continue
+    attached="$(tmux display-message -p -t "$name" '#{session_attached}' 2>/dev/null || true)"
+    [[ "$attached" == "0" ]] && printf '%s\n' "$name"
+  done < <(companions_of "$parent")
+}
+
+parse_picker_selection() {
+  local line="$1"
+  printf '%s\n' "${line%%[[:space:]]*}"
+}
+
+# Decides what `dev more` should do. Prints "NEW", the chosen companion name, or
+# nothing (when the picker is cancelled). Falls back to "NEW" when nothing is
+# detached or when fzf is unavailable.
+pick_companion_action() {
+  local parent="$1" next_slot="$2"
+  local detached menu name panes selection
+  detached="$(detached_companions "$parent")"
+
+  if [[ -z "$detached" ]] || ! command -v fzf >/dev/null 2>&1; then
+    printf 'NEW\n'
+    return 0
+  fi
+
+  # Build the fzf menu at function scope (avoids `local` inside a subshell).
+  # Each line is "KEY<TAB>LABEL"; KEY is "NEW" or a session name (never has spaces).
+  menu="$(printf 'NEW\t* New companion (+%s)' "$next_slot")"
+  while IFS= read -r name; do
+    [[ -z "$name" ]] && continue
+    panes="$(tmux list-panes -t "$name" 2>/dev/null | wc -l | tr -d ' ')"
+    menu+="$(printf '\n%s\t+%s . %s panes' "$name" "${name##*+}" "$panes")"
+  done <<< "$detached"
+
+  # The fzf --preview string is a snippet fzf re-evaluates per row, so its $sel,
+  # {1}, and #{...} placeholders must stay literal (single-quoted) here.
+  # shellcheck disable=SC2016
+  selection="$(printf '%s\n' "$menu" | fzf --delimiter='\t' --with-nth=2.. \
+      --prompt='Companion > ' --height=50% --layout=reverse --border \
+      --preview 'sel={1}; if [ "$sel" = NEW ]; then echo "Open a new tab of terminals."; else tmux list-panes -t "$sel" -F "#{pane_index}: #{pane_current_command}  (#{pane_current_path})" 2>/dev/null; fi' \
+      --preview-window='right,45%')" || true
+
+  if [[ -z "$selection" ]]; then
+    # Picker cancelled (Escape).
+    return 0
+  fi
+
+  parse_picker_selection "$selection"
+}
+
+open_companion_tab() {
+  local name="$1"
+  if [[ -n "${KITTY_WINDOW_ID:-}" ]] && kitty_remote_available; then
+    kitty @ launch --type=tab --tab-title "$name" tmux attach-session -t "$name"
+  else
+    printf 'Kitty remote control is unavailable; attach with: tmux attach-session -t %s\n' "$name" >&2
+  fi
+}
+
+dev_more_command() {
+  local parent="" count=4 force_new=0
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --session)
+        parent="${2:-}"
+        if [[ -z "$parent" ]]; then
+          printf 'Usage: dev more [--session NAME] [--count N] [--new]\n' >&2
+          exit 1
+        fi
+        shift 2
+        ;;
+      --count)
+        count="${2:-}"
+        if [[ ! "$count" =~ ^[0-9]+$ ]] || [[ "$count" -lt 1 ]]; then
+          printf 'dev more: --count must be a positive integer\n' >&2
+          exit 1
+        fi
+        shift 2
+        ;;
+      --new)
+        force_new=1
+        shift
+        ;;
+      -h|--help)
+        cat <<'EOF'
+Usage: dev more [--session NAME] [--count N] [--new]
+
+Open a new Kitty tab of terminals tied to a workstream (a "companion" session).
+
+Options:
+  --session NAME  Parent session id (e.g. repo-56e811). Defaults to the current
+                  tmux session when run inside one.
+  --count N       Number of terminal panes in the new tab (default 4).
+  --new           Skip the resume picker and always create a fresh companion.
+EOF
+        exit 0
+        ;;
+      *)
+        printf 'Unknown option for dev more: %s\n' "$1" >&2
+        exit 1
+        ;;
+    esac
+  done
+
+  if [[ -z "$parent" ]]; then
+    if [[ -n "${TMUX:-}" ]]; then
+      parent="$(parent_of_session "$(tmux display-message -p '#S')")"
+    else
+      printf 'dev more: provide --session NAME or run inside a tmux session\n' >&2
+      exit 1
+    fi
+  fi
+
+  if ! tmux has-session -t "$parent" 2>/dev/null; then
+    printf 'dev more: no tmux session named: %s\n' "$parent" >&2
+    exit 1
+  fi
+
+  local project
+  project="$(tmux display-message -p -t "$parent" '#{session_path}')"
+  if [[ -z "$project" ]]; then
+    project="$(tmux display-message -p -t "$parent" '#{pane_current_path}')"
+  fi
+
+  local next_slot action target
+  next_slot="$(next_companion_slot "$parent")"
+
+  if [[ "$force_new" -eq 1 ]]; then
+    action="NEW"
+  else
+    action="$(pick_companion_action "$parent" "$next_slot")"
+  fi
+
+  if [[ -z "$action" ]]; then
+    # Picker cancelled.
+    exit 0
+  fi
+
+  if [[ "$action" == "NEW" ]]; then
+    target="$(companion_name "$parent" "$next_slot")"
+    create_companion_session "$target" "$project" "$count"
+  else
+    target="$action"
+  fi
+
+  open_companion_tab "$target"
+}
+
 session_list_command() {
   local filter=""
   local sessions
@@ -384,6 +537,12 @@ if [[ "${1:-}" == "session" ]]; then
       exit 1
       ;;
   esac
+  exit 0
+fi
+
+if [[ "${1:-}" == "more" ]]; then
+  shift
+  dev_more_command "$@"
   exit 0
 fi
 
