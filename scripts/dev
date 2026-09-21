@@ -267,7 +267,7 @@ open_companion_tab() {
   if [[ -n "${KITTY_WINDOW_ID:-}" ]] && kitty_remote_available; then
     kitty @ launch --type=tab --tab-title "$name" tmux attach-session -t "$name"
   else
-    printf 'Kitty remote control is unavailable; attach with: tmux attach-session -t %s\n' "$name" >&2
+    printf 'Kitty remote control is unavailable; companion session %s is ready. Attach with: tmux attach-session -t %s\n' "$name" "$name" >&2
   fi
 }
 
@@ -286,7 +286,12 @@ dev_more_command() {
         ;;
       --count)
         count="${2:-}"
-        if [[ ! "$count" =~ ^[0-9]+$ ]] || [[ "$count" -lt 1 ]]; then
+        if [[ ! "$count" =~ ^[0-9]+$ ]]; then
+          printf 'dev more: --count must be a positive integer\n' >&2
+          exit 1
+        fi
+        count=$((10#$count))
+        if [[ "$count" -lt 1 ]]; then
           printf 'dev more: --count must be a positive integer\n' >&2
           exit 1
         fi

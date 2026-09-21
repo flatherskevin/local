@@ -142,7 +142,17 @@ done
 if command -v tmux >/dev/null 2>&1; then
   sp="devshortcut-$$"
   sp_dir="$(mktemp -d)"
-  trap 'for s in "$sp" "${sp}+1" "${sp}+2" "${sp}+3"; do tmux kill-session -t "$s" 2>/dev/null || true; done; rm -rf "$sp_dir"' EXIT
+  kitty_stub_dir="$(mktemp -d)"
+  kitty_log="${kitty_stub_dir}/kitty.log"
+  cat > "${kitty_stub_dir}/kitty" <<'EOF'
+#!/bin/sh
+if [ "$1" = "@" ] && [ "$2" = "ls" ]; then
+  exit 0
+fi
+printf '%s\n' "$*" >> "$KITTY_LOG"
+EOF
+  chmod +x "${kitty_stub_dir}/kitty"
+  trap 'for s in "$sp" "${sp}+1" "${sp}+2" "${sp}+3"; do tmux kill-session -t "$s" 2>/dev/null || true; done; rm -rf "$sp_dir" "$kitty_stub_dir"' EXIT
 
   tmux new-session -d -s "$sp" -c "$sp_dir"
   # A detached companion already occupies the lowest slot; the shortcut must
@@ -150,15 +160,29 @@ if command -v tmux >/dev/null 2>&1; then
   tmux new-session -d -s "${sp}+1" -c "$sp_dir"
 
   sp_rc=0
-  KITTY_WINDOW_ID='' "${SCRIPT_DIR}/dev" --count 1 --session "$sp" >/dev/null 2>&1 || sp_rc=$?
+  sp_out="$(KITTY_WINDOW_ID='' "${SCRIPT_DIR}/dev" --count 1 --session "$sp" 2>&1)" || sp_rc=$?
   check "dev --count exits 0" "0" "$sp_rc"
   check_status "dev --count leaves detached +1 alone" 0 tmux has-session -t "${sp}+1"
   check_status "dev --count creates fresh lowest-free +2" 0 tmux has-session -t "${sp}+2"
   sp_panes="$(tmux list-panes -t "${sp}+2" 2>/dev/null | wc -l | tr -d ' ')"
   check "dev --count 1 creates one pane" "1" "$sp_panes"
+  check "dev --count prints fallback attach command" \
+    "Kitty remote control is unavailable; companion session ${sp}+2 is ready. Attach with: tmux attach-session -t ${sp}+2" \
+    "$sp_out"
+
+  sp_rc=0
+  PATH="${kitty_stub_dir}:$PATH" KITTY_LOG="$kitty_log" KITTY_WINDOW_ID='test' \
+    "${SCRIPT_DIR}/dev" --count 08 --session "$sp" >/dev/null 2>&1 || sp_rc=$?
+  check "dev --count 08 exits 0" "0" "$sp_rc"
+  check_status "dev --count 08 creates fresh lowest-free +3" 0 tmux has-session -t "${sp}+3"
+  sp_panes="$(tmux list-panes -t "${sp}+3" 2>/dev/null | wc -l | tr -d ' ')"
+  check "dev --count 08 creates eight panes" "8" "$sp_panes"
+  check "dev --count launches a Kitty tab" \
+    "@ launch --type=tab --tab-title ${sp}+3 tmux attach-session -t ${sp}+3" \
+    "$(cat "$kitty_log" 2>/dev/null || true)"
 
   for s in "$sp" "${sp}+1" "${sp}+2" "${sp}+3"; do tmux kill-session -t "$s" 2>/dev/null || true; done
-  rm -rf "$sp_dir"
+  rm -rf "$sp_dir" "$kitty_stub_dir"
   trap - EXIT
 else
   printf '[skip] dev --count shortcut (tmux not available)\n'
