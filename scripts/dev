@@ -17,6 +17,7 @@ Usage:
   dev session list [--filter TEXT] List tmux sessions managed by dev/tmux
   dev session kill -s NAME...      Kill one or more tmux sessions by name
   dev more [--session NAME]        Open a new Kitty tab of terminals for a workstream
+  dev --count N                    Shortcut for: dev more --new --count N
   dev --refresh                    Re-apply layout and settings to the current tmux session
   dev --restart                    Kill current session and start a fresh one for the same project
   dev --resume                     Reopen all tmux sessions as Kitty tabs
@@ -551,6 +552,11 @@ fi
 if [[ "${1:-}" == "more" ]]; then
   shift
   dev_more_command "$@"
+  exit 0
+fi
+
+if [[ "${1:-}" == "--count" ]]; then
+  dev_more_command --new "$@"
   exit 0
 fi
 
