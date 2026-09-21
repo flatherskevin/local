@@ -43,6 +43,7 @@ Primary workflow commands:
 - `dev session list [--filter TEXT]`
 - `dev session kill -s NAME...`
 - `dev more [--session NAME]`
+- `dev --count N`
 - `dev --refresh`
 - `dev --restart`
 - `dev --resume`
@@ -77,6 +78,12 @@ For more terminal room in a workstream, `dev more` opens another Kitty tab of eq
 sized terminals backed by a companion session named `<session>+<n>`. Companions persist
 when their tab is closed and can be resumed from the `dev more` picker; killing the
 parent session with `dev session kill` also removes its companions.
+
+`dev --count N` is a shortcut for `dev more --new --count N`. Where `dev more` may
+resume a detached companion from its picker, `dev --count N` always opens a fresh
+companion session with exactly N terminal panes. It opens the session in a new Kitty
+tab when remote control is available; otherwise, it prints the `tmux attach-session`
+command for the ready companion.
 
 ## AI Tooling
 
