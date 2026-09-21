@@ -81,7 +81,9 @@ parent session with `dev session kill` also removes its companions.
 
 `dev --count N` is a shortcut for `dev more --new --count N`. Where `dev more` may
 resume a detached companion from its picker, `dev --count N` always opens a fresh
-Kitty tab with exactly N terminal panes on a new companion session.
+companion session with exactly N terminal panes. It opens the session in a new Kitty
+tab when remote control is available; otherwise, it prints the `tmux attach-session`
+command for the ready companion.
 
 ## AI Tooling
 
