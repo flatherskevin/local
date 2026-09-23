@@ -96,6 +96,23 @@ if command -v tmux >/dev/null 2>&1; then
   tmux kill-session -t "$test_companion" 2>/dev/null || true
   rm -rf "$test_dir"
   trap - EXIT
+
+  test_two="${test_parent}+2"
+  test_dir_two="$(mktemp -d)"
+  trap 'tmux kill-session -t "$test_two" 2>/dev/null || true; rm -rf "$test_dir_two"' EXIT
+
+  create_companion_session "$test_two" "$test_dir_two" 2
+
+  # tmux tiles two panes as stacked rows, so the two pane case must be forced side
+  # by side: two distinct column offsets sharing a single row offset.
+  two_left="$(tmux list-panes -t "${test_two}:1" -F '#{pane_left}' 2>/dev/null | sort -u | wc -l | tr -d ' ')"
+  two_top="$(tmux list-panes -t "${test_two}:1" -F '#{pane_top}' 2>/dev/null | sort -u | wc -l | tr -d ' ')"
+  check "create_companion_session 2 panes side by side (2 columns)" "2" "$two_left"
+  check "create_companion_session 2 panes side by side (1 row)" "1" "$two_top"
+
+  tmux kill-session -t "$test_two" 2>/dev/null || true
+  rm -rf "$test_dir_two"
+  trap - EXIT
 else
   printf '[skip] create_companion_session (tmux not available)\n'
 fi

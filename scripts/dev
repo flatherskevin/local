@@ -9,6 +9,11 @@ for cmd in fd fzf tmux; do
   fi
 done
 
+# tmux tiles two panes as stacked rows, so two pane companions get laid out side by side.
+COMPANION_TWO_PANES='#{==:#{window_panes},2}'
+COMPANION_SIDE_BY_SIDE_LAYOUT='even-horizontal'
+COMPANION_GRID_LAYOUT='tiled'
+
 usage() {
   cat <<'EOF'
 Usage:
@@ -183,17 +188,29 @@ create_session() {
   tmux select-pane -t "${session}:1.2"
 }
 
+apply_companion_layout() {
+  local window="$1"
+  tmux if-shell -t "$window" -F "$COMPANION_TWO_PANES" \
+    "select-layout -t '$window' $COMPANION_SIDE_BY_SIDE_LAYOUT" \
+    "select-layout -t '$window' $COMPANION_GRID_LAYOUT"
+}
+
+companion_layout_hook() {
+  printf "if -F '%s' 'select-layout %s' 'select-layout %s'" \
+    "$COMPANION_TWO_PANES" "$COMPANION_SIDE_BY_SIDE_LAYOUT" "$COMPANION_GRID_LAYOUT"
+}
+
 create_companion_session() {
   local session="$1" project="$2" count="$3"
   local i
   tmux new-session -d -s "$session" -c "$project"
   for ((i = 1; i < count; i++)); do
     tmux split-window -c "$project" -t "${session}:1"
-    tmux select-layout -t "${session}:1" tiled
+    apply_companion_layout "${session}:1"
   done
   tmux source-file ~/.config/tmux/tmux.conf
-  tmux select-layout -t "${session}:1" tiled
-  tmux set-hook -t "$session" window-resized "select-layout tiled"
+  apply_companion_layout "${session}:1"
+  tmux set-hook -t "$session" window-resized "$(companion_layout_hook)"
   tmux select-pane -t "${session}:1.1"
 }
 
