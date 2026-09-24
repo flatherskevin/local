@@ -14,7 +14,7 @@ The main subsystems are:
 
 - managed installer: `install.sh` stages versioned releases under `~/.flatherskevin/releases`, bootstraps the new release, then atomically repoints `~/.flatherskevin/local`
 - bootstrap flow: `bootstrap/macos.sh` installs Homebrew dependencies, optional AI CLIs, TPM, links configs, installs the Neovim stack, and runs validation
-- config layer: `config/` contains managed defaults for Neovim, tmux, Kitty, and zsh
+- config layer: `config/` contains managed defaults for Neovim, tmux, Kitty, zsh, and the `omp` agent
 - helper CLI layer: `scripts/` contains the workflow entrypoints such as `dev`, `cheat`, `leaders`, install helpers, and validation scripts
 - curriculum/docs layer: `docs/` is a 4-week learning path plus appendix/reference material
 - automation layer: `.github/workflows/` runs CI on PRs and pushes to `main`, and release automation on pushes to `main`
@@ -57,10 +57,25 @@ The repo separates managed defaults from optional/personal behavior:
 - managed defaults live in `config/*`
 - optional personal shell extras live in `config/zsh/personal.zsh`
 - free-form user overrides live in `~/.localrc`
+- managed `omp` agent defaults live in `config/omp/core.yml`, with the session-header extension under `config/omp/extensions/`
+- machine-local `omp` settings live in `~/.config/omp/local.yml`, beside the untracked `~/.omp/agent/mcp.json`, `~/.omp/agent/skills/`, and `~/.omp/agent/AGENTS.md`
 
 This boundary matters. Managed config should stay broadly reusable. Personal or
 machine-specific shortcuts should not leak back into the base setup unless they
 belong to the shared workflow.
+
+The `omp` layer follows the same split through config overlays.
+`config/zsh/zshrc` exports `PI_CONFIG_FILES` as a colon-separated list,
+`core.yml` first and `local.yml` second, including each file only when it
+exists. Precedence runs schema defaults, then the global
+`~/.omp/agent/config.yml`, then project config, then the `PI_CONFIG_FILES`
+overlays, and later files in that list win.
+
+Two consequences follow. The repo's `core.yml` outranks whatever the running
+agent wrote into its own global config, so a setting pinned in `core.yml`
+reverts on restart unless `local.yml` overrides it. An overlay file that exists
+but is not a YAML mapping is a hard startup error, which is why the seeded
+`local.yml` contains an empty mapping.
 
 ## Validation And Automation
 

@@ -97,6 +97,32 @@ When enabled during bootstrap, the current intended install paths are:
 The repo's intended usage pattern is AI beside the editor, not AI instead of
 repo inspection. Search the repo, inspect files, and review diffs yourself.
 
+The `omp` agent has a tracked config layer of its own. Install links the
+managed half into place and overwrites it on every run:
+
+- `config/omp/core.yml` links to `~/.config/omp/core.yml`
+- `config/omp/extensions/session-header.ts` links to
+  `~/.omp/agent/extensions/session-header.ts`
+
+The extension draws three rows above the built-in status bar: the full session
+name, clickable links to the pull requests and tickets the session actually
+acted on, and the working directory with its branch, worktree aware. `core.yml`
+leaves the `path` and `git` status-line segments off because that row is now
+the extension's job, so treat the two files as a pair.
+
+Anything machine-specific stays untracked and is never committed:
+
+- `~/.config/omp/local.yml` for settings that override `core.yml`
+- `~/.omp/agent/mcp.json` for MCP servers, including credential-bearing ones
+- `~/.omp/agent/skills/` for machine-local skills
+- `~/.omp/agent/AGENTS.md` for machine-local agent instructions
+
+Install seeds `local.yml` and `mcp.json` from `config/omp/local.example.yml`
+and `config/omp/mcp.example.json` only when the real file is absent, so your
+edits survive updates. Keep per-machine environment variables in `~/.localrc`.
+Set `OMP_LINEAR_WORKSPACE` there to turn bare ticket identifiers in the header
+into links; leave it unset to skip that part of the row.
+
 For the human-facing AI workflow lesson, see
 [`../week-4-master/day-1-ai-terminal-workflow.md`](../week-4-master/day-1-ai-terminal-workflow.md).
 
