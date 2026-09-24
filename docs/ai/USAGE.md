@@ -120,8 +120,11 @@ Anything machine-specific stays untracked and is never committed:
 Install seeds `local.yml` and `mcp.json` from `config/omp/local.example.yml`
 and `config/omp/mcp.example.json` only when the real file is absent, so your
 edits survive updates. Keep per-machine environment variables in `~/.localrc`.
-Set `OMP_LINEAR_WORKSPACE` there to turn bare ticket identifiers in the header
-into links; leave it unset to skip that part of the row.
+Set `OMP_ISSUE_TRACKER` there to a key from the extension's tracker registry
+(`linear` or `jira` today) and `OMP_ISSUE_SITE` to the workspace slug or host
+that tracker uses, and the header turns bare ticket identifiers into links.
+Leave either unset to skip that part of the row; pull requests still resolve.
+Supporting a different tracker is one more entry in the registry.
 
 For the human-facing AI workflow lesson, see
 [`../week-4-master/day-1-ai-terminal-workflow.md`](../week-4-master/day-1-ai-terminal-workflow.md).

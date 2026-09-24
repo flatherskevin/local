@@ -5,16 +5,26 @@
  * editor and the built-in status bar, so the bottom chrome reads:
  *
  *   row 1  session name (full, word-wrapped, never elided)
- *   row 2  pull requests and Linear tickets this session actually acted on
+ *   row 2  pull requests and issue-tracker tickets this session acted on
  *   row 3  the directory and branch work is landing in
  *   row 4  the built-in status bar (model, context, cost)
  *
  * Rows 2 and 3 are deliberately evidence-based rather than mention-based. A
  * link appears only once a tool call operated on it (a `gh pr` command, a
- * `pr://` read, a Linear tool invocation) or the checked-out branch resolves to
- * a pull request; the directory comes from the `cwd` a shell command ran in or
- * the `path` an edit wrote to. Prose, prompts, and unrelated tool output are
- * never scanned, so discussing a ticket cannot fabricate a link.
+ * `pr://` read, an issue-tracker tool invocation) or the checked-out branch
+ * resolves to a pull request; the directory comes from the `cwd` a shell
+ * command ran in or the `path` an edit wrote to. Prose, prompts, and unrelated
+ * tool output are never scanned, so discussing a ticket cannot fabricate a link.
+ *
+ * No issue tracker is hardcoded. `ISSUE_TRACKERS` below is a registry keyed by
+ * name, and two environment variables — set in `~/.localrc`, since the tracker
+ * changes with the machine — pick one:
+ *
+ *   OMP_ISSUE_TRACKER  registry key, e.g. `linear` or `jira`
+ *   OMP_ISSUE_SITE     the workspace slug or host that tracker needs
+ *
+ * Unset, the ticket half of row 2 stays off and pull requests still work.
+ * Supporting another tracker is one more entry in the registry.
  *
  * The built-in `path` and `git` segments report the session's own project
  * directory, which stays at the launch checkout even while the work happens in
@@ -33,8 +43,6 @@ import { theme } from "@oh-my-pi/pi-tui/theme";
 import type { ThemeColor } from "@oh-my-pi/pi-tui/theme/schema";
 
 const WIDGET_KEY = "session-header";
-/** Workspace slug used to build issue URLs from bare identifiers; unset disables bare-identifier tickets. */
-const LINEAR_WORKSPACE = process.env.OMP_LINEAR_WORKSPACE?.trim() ?? "";
 const UNTITLED_SESSION_LABEL = "untitled session";
 const LINK_SEPARATOR = "  ";
 /** Keeps an icon on the same wrapped row as the label it belongs to. */
@@ -56,19 +64,96 @@ const WORK_PATH_TOOLS: Record<string, true> = { write: true, edit: true };
 const PULL_REQUEST_COMMAND = /\bgh\b[^\n]{0,200}?\bpr\b/;
 const PULL_REQUEST_API_PATH = /\/pulls(?:\/|\b)/;
 const PULL_REQUEST_RESOURCE = /^pr:\/\/\d/;
-const LINEAR_TOOL_NAME = /linear/i;
-/** A device path that reaches the Linear MCP server, e.g. `xd://mcp__linear_get_issue`. */
-const LINEAR_RESOURCE = /^(?:xd:\/\/)?mcp__linear|^(?:xd:\/\/)?linear_server/;
 /** Any scheme-qualified target, which is never a filesystem directory. */
 const SCHEME_QUALIFIED = /^[a-z][a-z0-9+.-]*:\/\//i;
 /** A `cd <dir> && …` prefix, which omp itself treats as the command's working directory. */
 const LEADING_CHANGE_DIRECTORY = /^\s*cd\s+("[^"]+"|'[^']+'|[^\s&;|]+)\s*&&/;
 const SURROUNDING_QUOTES = /^["']|["']$/g;
+const REGEX_METACHARACTERS = /[.*+?^${}()|[\]\\]/g;
+const ID_PLACEHOLDER = "{id}";
 
 const PULL_REQUEST_URL = /https?:\/\/([^\s"'`<>/)\]]+)\/([^\s"'`<>/)\]]+)\/([^\s"'`<>/)\]]+)\/pull\/(\d+)/g;
-const LINEAR_ISSUE_URL = /https?:\/\/linear\.app\/([^\s"'`<>/)\]]+)\/issue\/([A-Za-z]{2,6}-\d{1,6})/g;
-/** A ticket identifier carried in a structured argument field, e.g. `{"id":"ENG-1234"}`. */
-const LINEAR_ISSUE_FIELD = /"(?:id|identifier|issueId|issue)"\s*:\s*"([A-Za-z]{2,6}-\d{1,6})"/g;
+/** An MCP device path, so a file merely named after a tracker is not mistaken for one. */
+const MCP_DEVICE_RESOURCE = /^(?:xd:\/\/)?mcp__/;
+
+/**
+ * One issue tracker's shape. Adding a tracker means adding an entry to
+ * {@link ISSUE_TRACKERS} — nothing downstream of this record knows any vendor.
+ */
+interface IssueTrackerProvider {
+	/** What `OMP_ISSUE_SITE` means here, quoted back when it is missing. */
+	siteHint: string;
+	/** Identifier shape, as a regular-expression source string. */
+	identifier: string;
+	/** Matches this tracker's tool name and its MCP device path. */
+	toolPattern: RegExp;
+	/** Canonical issue URL for a site, with `{id}` standing in for the identifier. */
+	urlTemplate(site: string): string;
+}
+
+const ISSUE_TRACKERS: Record<string, IssueTrackerProvider> = {
+	linear: {
+		siteHint: "workspace slug, as in https://linear.app/<slug>",
+		identifier: "[A-Za-z][A-Za-z0-9]{1,9}-\\d{1,6}",
+		toolPattern: /linear/i,
+		urlTemplate: site => `https://linear.app/${site}/issue/${ID_PLACEHOLDER}`,
+	},
+	jira: {
+		siteHint: "site host, as in acme.atlassian.net",
+		identifier: "[A-Z][A-Z0-9]{1,9}-\\d{1,6}",
+		toolPattern: /jira|atlassian/i,
+		urlTemplate: site => `https://${site}/browse/${ID_PLACEHOLDER}`,
+	},
+};
+
+/** A selected provider, compiled against the site this machine points at. */
+interface IssueTracker {
+	/** Recognizes a ticket URL already present in a command; group 1 is the identifier. */
+	urlPattern: RegExp;
+	/** Recognizes an identifier passed as a structured argument; group 1 is the identifier. */
+	fieldPattern: RegExp;
+	toolPattern: RegExp;
+	buildUrl(identifier: string): string;
+}
+
+type TrackerReporter = (message: string, context: Record<string, unknown>) => void;
+
+/**
+ * Selected by `OMP_ISSUE_TRACKER` and `OMP_ISSUE_SITE`, which belong in
+ * `~/.localrc` because the tracker changes with the machine. Returning
+ * undefined simply leaves tickets out of row 2; pull requests are unaffected.
+ */
+function resolveIssueTracker(report: TrackerReporter): IssueTracker | undefined {
+	const name = process.env.OMP_ISSUE_TRACKER?.trim().toLowerCase();
+	if (!name) return undefined;
+	const provider = ISSUE_TRACKERS[name];
+	if (!provider) {
+		report("session-header: unknown OMP_ISSUE_TRACKER", { name, known: Object.keys(ISSUE_TRACKERS).join(", ") });
+		return undefined;
+	}
+	const site = process.env.OMP_ISSUE_SITE?.trim();
+	if (!site) {
+		report("session-header: OMP_ISSUE_SITE is required", { tracker: name, expected: provider.siteHint });
+		return undefined;
+	}
+	const template = provider.urlTemplate(site);
+	const placeholder = ID_PLACEHOLDER.replace(REGEX_METACHARACTERS, "\\$&");
+	const literal = template.replace(REGEX_METACHARACTERS, "\\$&");
+	try {
+		return {
+			urlPattern: new RegExp(literal.split(placeholder).join(`(${provider.identifier})`), "g"),
+			fieldPattern: new RegExp(
+				`"(?:id|key|identifier|issue|issueId|issueKey|issueIdOrKey)"\\s*:\\s*"(${provider.identifier})"`,
+				"g",
+			),
+			toolPattern: provider.toolPattern,
+			buildUrl: value => template.split(ID_PLACEHOLDER).join(value),
+		};
+	} catch (error) {
+		report("session-header: tracker pattern did not compile", { tracker: name, error: String(error) });
+		return undefined;
+	}
+}
 
 type LinkKind = "pullRequest" | "ticket";
 
@@ -133,13 +218,13 @@ function rememberLink(links: Map<string, SessionLink>, link: SessionLink): boole
 	return true;
 }
 
-/** Tickets collapse on identifier so an argument field and a linear.app URL stay one entry. */
-function rememberTicket(links: Map<string, SessionLink>, workspace: string, identifier: string): boolean {
+/** Tickets collapse on identifier so an argument field and a ticket URL stay one entry. */
+function rememberTicket(links: Map<string, SessionLink>, tracker: IssueTracker, identifier: string): boolean {
 	const ticket = identifier.toUpperCase();
 	return rememberLink(links, {
 		kind: "ticket",
 		label: ticket,
-		url: `https://linear.app/${workspace}/issue/${ticket}`,
+		url: tracker.buildUrl(ticket),
 		sortKey: `1:${ticket}`,
 	});
 }
@@ -158,14 +243,20 @@ function harvestPullRequestUrls(text: string, links: Map<string, SessionLink>): 
 	return added;
 }
 
-function harvestLinearIssues(text: string, links: Map<string, SessionLink>, includeFields: boolean): boolean {
+function harvestTickets(
+	text: string,
+	links: Map<string, SessionLink>,
+	tracker: IssueTracker | undefined,
+	includeFields: boolean,
+): boolean {
+	if (!tracker) return false;
 	let added = false;
-	for (const match of text.matchAll(LINEAR_ISSUE_URL)) {
-		added = rememberTicket(links, match[1]!, match[2]!) || added;
+	for (const match of text.matchAll(tracker.urlPattern)) {
+		added = rememberTicket(links, tracker, match[1]!) || added;
 	}
-	if (!includeFields || !LINEAR_WORKSPACE) return added;
-	for (const match of text.matchAll(LINEAR_ISSUE_FIELD)) {
-		added = rememberTicket(links, LINEAR_WORKSPACE, match[1]!) || added;
+	if (!includeFields) return added;
+	for (const match of text.matchAll(tracker.fieldPattern)) {
+		added = rememberTicket(links, tracker, match[1]!) || added;
 	}
 	return added;
 }
@@ -214,6 +305,7 @@ function buildRows(
 }
 
 export default function sessionHeader(pi: ExtensionAPI): void {
+	const tracker = resolveIssueTracker((message, context) => pi.logger.warn(message, context));
 	const links = new Map<string, SessionLink>();
 	const pullRequestActionIds = new Set<string>();
 	const scannedEntryIds = new Set<string>();
@@ -245,13 +337,13 @@ export default function sessionHeader(pi: ExtensionAPI): void {
 		if (opensPullRequest) {
 			pullRequestActionIds.add(toolCallId);
 			added = harvestPullRequestUrls(command, links) || added;
-			added = harvestLinearIssues(command, links, false) || added;
+			added = harvestTickets(command, links, tracker, false) || added;
 		}
 
-		if (LINEAR_TOOL_NAME.test(toolName)) {
-			added = harvestLinearIssues(stringifyForScan(args), links, true) || added;
-		} else if (LINEAR_RESOURCE.test(resource)) {
-			added = harvestLinearIssues(readArgument(args, "content"), links, true) || added;
+		if (tracker?.toolPattern.test(toolName)) {
+			added = harvestTickets(stringifyForScan(args), links, tracker, true) || added;
+		} else if (tracker && MCP_DEVICE_RESOURCE.test(resource) && tracker.toolPattern.test(resource)) {
+			added = harvestTickets(readArgument(args, "content"), links, tracker, true) || added;
 		}
 		return added;
 	};
