@@ -1,0 +1,16 @@
+# Seeded once into ~/.config/omp/local.yml, then never touched again.
+# Machine-local omp settings. Loaded after config/omp/core.yml, so anything set
+# here wins over the managed defaults.
+#
+# omp rejects an overlay whose document root is not a mapping, so leave the `{}`
+# in place until you add a real key, and delete it once you do.
+#
+# Examples:
+#   modelRoles:
+#     default: anthropic/claude-sonnet-5
+#   tui:
+#     hyperlinks: always
+#   statusLine:
+#     showHookStatus: false
+
+{}

@@ -25,6 +25,7 @@ optional_commands=(
   codex
   colima
   docker
+  omp
 )
 
 status=0
