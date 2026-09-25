@@ -104,6 +104,8 @@ const PULL_REQUEST_ROLES: Record<string, LinkRole> = {
 const ISSUE_STATE_FIELD = /"(?:state|status)"\s*:\s*(?:\{[^{}]*?"name"\s*:\s*"([^"]+)"|"([^"]+)")/;
 const ISSUE_STATE_DONE = /\b(?:done|complete|completed|closed|resolved|shipped|merged)\b/i;
 const ISSUE_STATE_IN_REVIEW = /review/i;
+/** `gh` reporting that a pull request has landed. */
+const PULL_REQUEST_MERGED = /"state"\s*:\s*"MERGED"|\bMerged\b/;
 /** GitHub check states that mean the run has not settled yet. */
 const CHECK_IN_FLIGHT = /"(?:status|state)"\s*:\s*"(?:QUEUED|IN_PROGRESS|PENDING|WAITING|REQUESTED)"/;
 /** JSON carried inside a text block arrives escaped; scanning collapses it first. */
@@ -301,6 +303,13 @@ const STATE_STYLES: Record<LinkState, LinkStyle> = {
 	},
 };
 
+/** Reads a pull request's own state out of `gh` output already on hand. */
+function classifyPullRequestOutput(text: string): LinkState | undefined {
+	if (PULL_REQUEST_MERGED.test(text)) return "merged";
+	if (CHECK_IN_FLIGHT.test(text)) return "building";
+	return undefined;
+}
+
 /** Maps a tracker's own workflow-state wording onto the two states worth a glyph. */
 function classifyIssueState(name: string): LinkState | undefined {
 	if (ISSUE_STATE_DONE.test(name)) return "done";
@@ -373,19 +382,21 @@ function rememberTicket(
 	});
 }
 
-function harvestPullRequestUrls(text: string, links: Map<string, SessionLink>, role: LinkRole): boolean {
-	let added = false;
+/** Returns the urls seen, so a caller can attach the state its result reports. */
+function harvestPullRequestUrls(text: string, links: Map<string, SessionLink>, role: LinkRole): string[] {
+	const found: string[] = [];
 	for (const [, host, owner, repository, number] of text.matchAll(PULL_REQUEST_URL)) {
-		const remembered = rememberLink(links, {
+		const url = `https://${host}/${owner}/${repository}/pull/${number}`;
+		rememberLink(links, {
 			kind: "pullRequest",
 			role,
 			state: undefined,
 			label: `${repository}#${number}`,
-			url: `https://${host}/${owner}/${repository}/pull/${number}`,
+			url,
 		});
-		added = remembered || added;
+		found.push(url);
 	}
-	return added;
+	return found;
 }
 
 /** Returns the identifiers seen, so a caller can attach the state its result reports. */
@@ -467,6 +478,7 @@ export default function sessionHeader(pi: ExtensionAPI): void {
 	const links = new Map<string, SessionLink>();
 	const pullRequestActionRoles = new Map<string, LinkRole>();
 	const trackerActionTickets = new Map<string, string[]>();
+	const pullRequestActionUrls = new Map<string, string[]>();
 	const pullRequestStateCheckedAtMs = new Map<string, number>();
 	const scannedEntryIds = new Set<string>();
 	const inspectedBranches = new Set<string>();
@@ -487,6 +499,14 @@ export default function sessionHeader(pi: ExtensionAPI): void {
 			changed = true;
 		}
 		return changed;
+	};
+
+	/** Absence of evidence is not evidence of a change, so an unknown state leaves the link alone. */
+	const applyPullRequestState = (url: string, state: LinkState | undefined): boolean => {
+		const link = links.get(`pullRequest:${url}`);
+		if (!state || !link || link.state === state) return false;
+		link.state = state;
+		return true;
 	};
 
 	/** A pull-request action's own output carries the URL (`gh pr create`), so its result is worth scanning. */
@@ -512,7 +532,9 @@ export default function sessionHeader(pi: ExtensionAPI): void {
 				? "reviewing"
 				: (PULL_REQUEST_ROLES[subcommand] ?? "reference");
 			pullRequestActionRoles.set(toolCallId, role);
-			added = harvestPullRequestUrls(command, links, role) || added;
+			const seenUrls = harvestPullRequestUrls(command, links, role);
+			if (seenUrls.length > 0) pullRequestActionUrls.set(toolCallId, seenUrls);
+			added = seenUrls.length > 0 || added;
 			added = harvestTickets(command, links, tracker, false, role).length > 0 || added;
 		}
 
@@ -542,7 +564,16 @@ export default function sessionHeader(pi: ExtensionAPI): void {
 		const role = pullRequestActionRoles.get(toolCallId);
 		if (!role) return false;
 		const resultText = stringifyForScan(content);
-		return resultText ? harvestPullRequestUrls(resultText, links, role) : false;
+		if (!resultText) return false;
+		const urls = new Set([...(pullRequestActionUrls.get(toolCallId) ?? []), ...harvestPullRequestUrls(resultText, links, role)]);
+		let changed = urls.size > 0;
+		// One pull request in play means a state in the output describes that one;
+		// a listing mentions many, and its first state would describe the wrong link.
+		if (urls.size === 1) {
+			const [url] = urls;
+			changed = applyPullRequestState(url!, classifyPullRequestOutput(resultText)) || changed;
+		}
+		return changed;
 	};
 
 	const ingestMessage = (message: unknown): boolean => {
@@ -695,7 +726,7 @@ export default function sessionHeader(pi: ExtensionAPI): void {
 			if (!inspectedBranches.has(fingerprint)) {
 				inspectedBranches.add(fingerprint);
 				const url = await readBranchPullRequestUrl(probedLocation.root);
-				if (url && harvestPullRequestUrls(url, links, "active")) paint(ctx);
+				if (url && harvestPullRequestUrls(url, links, "active").length > 0) paint(ctx);
 			}
 			if (await refreshPullRequestStates(probedLocation.root)) paint(ctx);
 		} finally {
@@ -724,6 +755,7 @@ export default function sessionHeader(pi: ExtensionAPI): void {
 	const mount = (ctx: ExtensionContext): void => {
 		links.clear();
 		pullRequestActionRoles.clear();
+		pullRequestActionUrls.clear();
 		trackerActionTickets.clear();
 		pullRequestStateCheckedAtMs.clear();
 		scannedEntryIds.clear();
