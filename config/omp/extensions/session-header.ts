@@ -45,8 +45,9 @@ import { homedir } from "node:os";
 import * as path from "node:path";
 import type { ExtensionAPI, ExtensionContext } from "@oh-my-pi/pi-coding-agent";
 import { fileHyperlink, isHyperlinkEnabled, urlHyperlink } from "@oh-my-pi/pi-tui/render";
-import { theme } from "@oh-my-pi/pi-tui/theme";
+import { getSessionAccentAnsi, theme } from "@oh-my-pi/pi-tui/theme";
 import type { ThemeColor } from "@oh-my-pi/pi-tui/theme/schema";
+import type { SymbolPreset } from "@oh-my-pi/pi-tui/theme/symbols";
 
 const WIDGET_KEY = "session-header";
 const UNTITLED_SESSION_LABEL = "untitled session";
@@ -236,41 +237,68 @@ interface RepositoryProbe {
 }
 
 interface LinkStyle {
-	color: ThemeColor;
+	paint: (text: string) => string;
 	icon: () => string;
 }
+
+function themePaint(color: ThemeColor): (text: string) => string {
+	return text => theme.fg(color, text);
+}
+
+/**
+ * Merged is purple everywhere git forges are drawn, and no theme here carries a
+ * purple token, so this one colour is literal. It still goes through the
+ * theme's own converter, which drops to 256-colour when truecolor is absent.
+ */
+function hexPaint(hex: string): (text: string) => string {
+	return text => {
+		const ansi = getSessionAccentAnsi(hex);
+		return ansi ? `${ansi}${text}\x1b[0m` : text;
+	};
+}
+
+const MERGED_PURPLE = "#a371f7";
 
 /** One glyph per relationship, so the row reads at a glance instead of by label. */
 const LINK_STYLES: Record<LinkKind, Record<LinkRole, LinkStyle>> = {
 	pullRequest: {
-		active: { color: "statusLineGitClean", icon: () => theme.icon.pin },
-		editing: { color: "statusLineGitClean", icon: () => theme.icon.pr },
-		reviewing: { color: "statusLineContext", icon: () => theme.icon.advisor },
-		reference: { color: "muted", icon: () => theme.icon.file },
+		active: { paint: themePaint("statusLineGitClean"), icon: () => theme.icon.pin },
+		editing: { paint: themePaint("statusLineGitClean"), icon: () => theme.icon.pr },
+		reviewing: { paint: themePaint("statusLineContext"), icon: () => theme.icon.advisor },
+		reference: { paint: themePaint("muted"), icon: () => theme.icon.file },
 	},
 	ticket: {
-		active: { color: "accent", icon: () => theme.icon.goal },
-		editing: { color: "accent", icon: () => theme.icon.plan },
-		reviewing: { color: "statusLineContext", icon: () => theme.icon.advisor },
-		reference: { color: "muted", icon: () => theme.icon.file },
+		active: { paint: themePaint("accent"), icon: () => theme.icon.goal },
+		editing: { paint: themePaint("accent"), icon: () => theme.icon.plan },
+		reviewing: { paint: themePaint("statusLineContext"), icon: () => theme.icon.advisor },
+		reference: { paint: themePaint("muted"), icon: () => theme.icon.file },
 	},
 };
 
 /**
  * Landing and building deserve glyphs that carry across a glance, which the
- * theme's symbol sets do not offer, so these two supply their own. The ascii
- * preset still gets a text form rather than an emoji it cannot draw.
+ * theme's symbol sets do not offer, so these two supply their own per preset.
+ * `nerd` gets the real Codicon; the others get the closest thing they can draw.
  */
-function stateGlyph(emoji: string, plain: string): () => string {
-	return () => (theme.getSymbolPreset() === "ascii" ? plain : emoji);
+function presetGlyph(glyphs: Record<SymbolPreset, string>): () => string {
+	return () => glyphs[theme.getSymbolPreset()];
 }
 
 /** A settled or running state says more than the role, so it takes the glyph. */
 const STATE_STYLES: Record<LinkState, LinkStyle> = {
-	building: { color: "warning", icon: stateGlyph("\u{1F3D7}\uFE0F", "[build]") },
-	merged: { color: "success", icon: stateGlyph("\u2705", "[ok]") },
-	inReview: { color: "statusLineContext", icon: () => theme.icon.advisor },
-	done: { color: "success", icon: stateGlyph("\u2705", "[ok]") },
+	building: {
+		paint: themePaint("warning"),
+		icon: presetGlyph({ nerd: "\u{1F3D7}\uFE0F", unicode: "\u{1F3D7}\uFE0F", ascii: "[build]" }),
+	},
+	merged: {
+		paint: hexPaint(MERGED_PURPLE),
+		icon: presetGlyph({ nerd: "\ueafe", unicode: "\u{1F500}", ascii: "[merged]" }),
+	},
+	inReview: { paint: themePaint("statusLineContext"), icon: () => theme.icon.advisor },
+	done: {
+		paint: themePaint("success"),
+		icon: presetGlyph({ nerd: "\u2705", unicode: "\u2705", ascii: "[ok]" }),
+	},
 };
 
 /** Maps a tracker's own workflow-state wording onto the two states worth a glyph. */
@@ -391,7 +419,7 @@ function renderSessionRow(ctx: ExtensionContext): string {
 
 function renderLink(link: SessionLink): string {
 	const style = link.state ? STATE_STYLES[link.state] : LINK_STYLES[link.kind][link.role];
-	const label = theme.fg(style.color, `${style.icon()}${ICON_GLUE}${link.label}`);
+	const label = style.paint(`${style.icon()}${ICON_GLUE}${link.label}`);
 	return isHyperlinkEnabled() ? urlHyperlink(link.url, label) : `${label} ${theme.fg("muted", link.url)}`;
 }
 
