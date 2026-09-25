@@ -117,6 +117,13 @@ diff or review reads as reviewing, and a plain lookup reads as a muted
 reference. A link only moves up that order, so reading something later never
 demotes work already done.
 
+Where the thing's own state is known it takes the glyph instead, because a
+merged pull request is merged whoever touched it: a pull request reads as
+merged or as building while its checks run, and a ticket reads as done or in
+review. Ticket state rides along on tracker replies the session already made,
+so it costs nothing extra; pull-request state is a `gh` call, so it is limited
+to the work in hand and refreshed on a slow interval.
+
 Anything machine-specific stays untracked and is never committed:
 
 - `~/.config/omp/local.yml` for settings that override `core.yml`

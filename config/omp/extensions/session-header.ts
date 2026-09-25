@@ -58,6 +58,9 @@ const HOME_DIRECTORY = homedir();
 const GIT_COMMAND_TIMEOUT_MS = 5_000;
 const GITHUB_COMMAND_TIMEOUT_MS = 10_000;
 const REPOSITORY_REFRESH_INTERVAL_MS = 15_000;
+/** Pull-request state costs a `gh` call each, so it refreshes slower and only for work in hand. */
+const PULL_REQUEST_STATE_INTERVAL_MS = 60_000;
+const MAX_PULL_REQUEST_STATE_LOOKUPS = 3;
 const MAX_SCAN_CHARACTERS = 512_000;
 
 /** Tools whose action lives in a `command` argument, with `cwd` naming where it ran. */
@@ -90,6 +93,20 @@ const PULL_REQUEST_ROLES: Record<string, LinkRole> = {
 	diff: "reviewing",
 	checks: "reviewing",
 };
+
+/**
+ * A tracker's workflow state, read out of whatever payload its tool returned.
+ * Both a nested `{"state":{"name":"In Review"}}` and a flat `{"status":"Done"}`
+ * are matched, which covers every tracker shape seen so far without asking a
+ * provider to describe its own JSON.
+ */
+const ISSUE_STATE_FIELD = /"(?:state|status)"\s*:\s*(?:\{[^{}]*?"name"\s*:\s*"([^"]+)"|"([^"]+)")/;
+const ISSUE_STATE_DONE = /\b(?:done|complete|completed|closed|resolved|shipped|merged)\b/i;
+const ISSUE_STATE_IN_REVIEW = /review/i;
+/** GitHub check states that mean the run has not settled yet. */
+const CHECK_IN_FLIGHT = /"(?:status|state)"\s*:\s*"(?:QUEUED|IN_PROGRESS|PENDING|WAITING|REQUESTED)"/;
+/** JSON carried inside a text block arrives escaped; scanning collapses it first. */
+const ESCAPED_QUOTE = /\\"/g;
 /** Any scheme-qualified target, which is never a filesystem directory. */
 const SCHEME_QUALIFIED = /^[a-z][a-z0-9+.-]*:\/\//i;
 /** A `cd <dir> && …` prefix, which omp itself treats as the command's working directory. */
@@ -191,9 +208,17 @@ type LinkRole = "active" | "editing" | "reviewing" | "reference";
 
 const ROLE_RANK: Record<LinkRole, number> = { active: 0, editing: 1, reviewing: 2, reference: 3 };
 
+/**
+ * What the thing itself is doing, as opposed to what this session did to it.
+ * A known state outranks the role for display, because a merged pull request
+ * is merged no matter who touched it.
+ */
+type LinkState = "building" | "merged" | "inReview" | "done";
+
 interface SessionLink {
 	kind: LinkKind;
 	role: LinkRole;
+	state: LinkState | undefined;
 	label: string;
 	url: string;
 }
@@ -231,22 +256,47 @@ const LINK_STYLES: Record<LinkKind, Record<LinkRole, LinkStyle>> = {
 	},
 };
 
+/** A settled or running state says more than the role, so it takes the glyph. */
+const STATE_STYLES: Record<LinkState, LinkStyle> = {
+	building: { color: "warning", icon: () => theme.status.running },
+	merged: { color: "success", icon: () => theme.icon.package },
+	inReview: { color: "statusLineContext", icon: () => theme.icon.advisor },
+	done: { color: "success", icon: () => theme.status.success },
+};
+
+/** Maps a tracker's own workflow-state wording onto the two states worth a glyph. */
+function classifyIssueState(name: string): LinkState | undefined {
+	if (ISSUE_STATE_DONE.test(name)) return "done";
+	if (ISSUE_STATE_IN_REVIEW.test(name)) return "inReview";
+	return undefined;
+}
+
 /** Session managers notify on auto-title generation, but the callback is absent from the readonly view. */
 interface SessionNameNotifier {
 	onSessionNameChanged(listener: () => void): () => void;
 }
 
-/** Serializes one source up to the character cap so a huge tool payload cannot stall a repaint. */
+/**
+ * Serializes one source for pattern matching, capped so a huge tool payload
+ * cannot stall a repaint. Escaped quotes are collapsed because a tool result is
+ * normally JSON carried inside a text block, which would otherwise arrive as
+ * `\"state\"` and match nothing. The output is only ever scanned, never shown.
+ */
 function stringifyForScan(source: unknown): string {
-	if (typeof source === "string") return source.slice(0, MAX_SCAN_CHARACTERS);
-	const seen = new WeakSet<object>();
-	const serialized = JSON.stringify(source, (_key, value) => {
-		if (typeof value !== "object" || value === null) return value;
-		if (seen.has(value)) return undefined;
-		seen.add(value);
-		return value;
-	});
-	return serialized ? serialized.slice(0, MAX_SCAN_CHARACTERS) : "";
+	let text: string;
+	if (typeof source === "string") {
+		text = source;
+	} else {
+		const seen = new WeakSet<object>();
+		text =
+			JSON.stringify(source, (_key, value) => {
+				if (typeof value !== "object" || value === null) return value;
+				if (seen.has(value)) return undefined;
+				seen.add(value);
+				return value;
+			}) ?? "";
+	}
+	return text.slice(0, MAX_SCAN_CHARACTERS).replace(ESCAPED_QUOTE, '"');
 }
 
 /** Reads one string argument, so evidence comes from the field a tool acts on rather than its whole payload. */
@@ -277,7 +327,13 @@ function rememberTicket(
 	role: LinkRole,
 ): boolean {
 	const ticket = identifier.toUpperCase();
-	return rememberLink(links, { kind: "ticket", role, label: ticket, url: tracker.buildUrl(ticket) });
+	return rememberLink(links, {
+		kind: "ticket",
+		role,
+		state: undefined,
+		label: ticket,
+		url: tracker.buildUrl(ticket),
+	});
 }
 
 function harvestPullRequestUrls(text: string, links: Map<string, SessionLink>, role: LinkRole): boolean {
@@ -286,6 +342,7 @@ function harvestPullRequestUrls(text: string, links: Map<string, SessionLink>, r
 		const remembered = rememberLink(links, {
 			kind: "pullRequest",
 			role,
+			state: undefined,
 			label: `${repository}#${number}`,
 			url: `https://${host}/${owner}/${repository}/pull/${number}`,
 		});
@@ -294,23 +351,27 @@ function harvestPullRequestUrls(text: string, links: Map<string, SessionLink>, r
 	return added;
 }
 
+/** Returns the identifiers seen, so a caller can attach the state its result reports. */
+function collectTicketIdentifiers(text: string, tracker: IssueTracker, includeFields: boolean): string[] {
+	const found: string[] = [];
+	for (const match of text.matchAll(tracker.urlPattern)) found.push(match[1]!.toUpperCase());
+	if (includeFields) {
+		for (const match of text.matchAll(tracker.fieldPattern)) found.push(match[1]!.toUpperCase());
+	}
+	return found;
+}
+
 function harvestTickets(
 	text: string,
 	links: Map<string, SessionLink>,
 	tracker: IssueTracker | undefined,
 	includeFields: boolean,
 	role: LinkRole,
-): boolean {
-	if (!tracker) return false;
-	let added = false;
-	for (const match of text.matchAll(tracker.urlPattern)) {
-		added = rememberTicket(links, tracker, match[1]!, role) || added;
-	}
-	if (!includeFields) return added;
-	for (const match of text.matchAll(tracker.fieldPattern)) {
-		added = rememberTicket(links, tracker, match[1]!, role) || added;
-	}
-	return added;
+): string[] {
+	if (!tracker) return [];
+	const identifiers = collectTicketIdentifiers(text, tracker, includeFields);
+	for (const identifier of identifiers) rememberTicket(links, tracker, identifier, role);
+	return identifiers;
 }
 
 function renderSessionRow(ctx: ExtensionContext): string {
@@ -320,7 +381,7 @@ function renderSessionRow(ctx: ExtensionContext): string {
 }
 
 function renderLink(link: SessionLink): string {
-	const style = LINK_STYLES[link.kind][link.role];
+	const style = link.state ? STATE_STYLES[link.state] : LINK_STYLES[link.kind][link.role];
 	const label = theme.fg(style.color, `${style.icon()}${ICON_GLUE}${link.label}`);
 	return isHyperlinkEnabled() ? urlHyperlink(link.url, label) : `${label} ${theme.fg("muted", link.url)}`;
 }
@@ -368,6 +429,8 @@ export default function sessionHeader(pi: ExtensionAPI): void {
 	const tracker = resolveIssueTracker((message, context) => pi.logger.warn(message, context));
 	const links = new Map<string, SessionLink>();
 	const pullRequestActionRoles = new Map<string, LinkRole>();
+	const trackerActionTickets = new Map<string, string[]>();
+	const pullRequestStateCheckedAtMs = new Map<string, number>();
 	const scannedEntryIds = new Set<string>();
 	const inspectedBranches = new Set<string>();
 	const probesByDirectory = new Map<string, RepositoryProbe>();
@@ -376,6 +439,18 @@ export default function sessionHeader(pi: ExtensionAPI): void {
 	let paintedRows = "";
 	let repositoryProbeInFlight = false;
 	let releaseSessionNameListener: (() => void) | undefined;
+
+	/** A tracker reports the truth about its own ticket, so its state replaces whatever was shown. */
+	const applyTicketState = (identifiers: readonly string[], state: LinkState): boolean => {
+		let changed = false;
+		for (const identifier of identifiers) {
+			const link = links.get(`ticket:${identifier}`);
+			if (!link || link.state === state) continue;
+			link.state = state;
+			changed = true;
+		}
+		return changed;
+	};
 
 	/** A pull-request action's own output carries the URL (`gh pr create`), so its result is worth scanning. */
 	const ingestToolCall = (toolCallId: string, toolName: string, args: unknown): boolean => {
@@ -401,20 +476,32 @@ export default function sessionHeader(pi: ExtensionAPI): void {
 				: (PULL_REQUEST_ROLES[subcommand] ?? "reference");
 			pullRequestActionRoles.set(toolCallId, role);
 			added = harvestPullRequestUrls(command, links, role) || added;
-			added = harvestTickets(command, links, tracker, false, role) || added;
+			added = harvestTickets(command, links, tracker, false, role).length > 0 || added;
 		}
 
 		const ticketRole: LinkRole = TRACKER_MUTATION.test(toolName) ? "editing" : "reference";
 		if (tracker?.toolPattern.test(toolName)) {
-			added = harvestTickets(stringifyForScan(args), links, tracker, true, ticketRole) || added;
+			const seen = harvestTickets(stringifyForScan(args), links, tracker, true, ticketRole);
+			if (seen.length > 0) trackerActionTickets.set(toolCallId, seen);
+			added = seen.length > 0 || added;
 		} else if (tracker && MCP_DEVICE_RESOURCE.test(resource) && tracker.toolPattern.test(resource)) {
 			const deviceRole: LinkRole = TRACKER_MUTATION.test(resource) ? "editing" : "reference";
-			added = harvestTickets(readArgument(args, "content"), links, tracker, true, deviceRole) || added;
+			const seen = harvestTickets(readArgument(args, "content"), links, tracker, true, deviceRole);
+			if (seen.length > 0) trackerActionTickets.set(toolCallId, seen);
+			added = seen.length > 0 || added;
 		}
 		return added;
 	};
 
+	/** A tracker result carries the ticket's own workflow state; a pull-request result carries new URLs. */
 	const ingestToolResult = (toolCallId: string, content: unknown): boolean => {
+		const tickets = trackerActionTickets.get(toolCallId);
+		if (tickets) {
+			const stateName = ISSUE_STATE_FIELD.exec(stringifyForScan(content));
+			const state = stateName ? classifyIssueState(stateName[1] ?? stateName[2] ?? "") : undefined;
+			if (state) return applyTicketState(tickets, state);
+			return false;
+		}
 		const role = pullRequestActionRoles.get(toolCallId);
 		if (!role) return false;
 		const resultText = stringifyForScan(content);
@@ -467,6 +554,43 @@ export default function sessionHeader(pi: ExtensionAPI): void {
 			pi.logger.debug("session-header: pull request lookup failed", { cwd, error: String(error) });
 			return undefined;
 		}
+	};
+
+	/**
+	 * Ask GitHub what a pull request is doing. Only the work in hand is worth a
+	 * subprocess, so this covers the links the session is active on or editing,
+	 * capped per pass and re-checked on a slow interval.
+	 */
+	const refreshPullRequestStates = async (cwd: string): Promise<boolean> => {
+		const now = Date.now();
+		const candidates = Array.from(links.values())
+			.filter(link => link.kind === "pullRequest" && link.state !== "merged")
+			.filter(link => link.role === "active" || link.role === "editing")
+			.filter(link => now - (pullRequestStateCheckedAtMs.get(link.url) ?? 0) >= PULL_REQUEST_STATE_INTERVAL_MS)
+			.slice(0, MAX_PULL_REQUEST_STATE_LOOKUPS);
+		let changed = false;
+		for (const link of candidates) {
+			pullRequestStateCheckedAtMs.set(link.url, now);
+			try {
+				const result = await pi.exec("gh", ["pr", "view", link.url, "--json", "state,statusCheckRollup"], {
+					cwd,
+					timeout: GITHUB_COMMAND_TIMEOUT_MS,
+				});
+				if (result.code !== 0) continue;
+				const merged = /"state"\s*:\s*"MERGED"/.test(result.stdout);
+				const state: LinkState | undefined = merged
+					? "merged"
+					: CHECK_IN_FLIGHT.test(result.stdout)
+						? "building"
+						: undefined;
+				if (link.state === state) continue;
+				link.state = state;
+				changed = true;
+			} catch (error) {
+				pi.logger.debug("session-header: pull request state lookup failed", { url: link.url, error: String(error) });
+			}
+		}
+		return changed;
 	};
 
 	const paint = (ctx: ExtensionContext): void => {
@@ -531,10 +655,12 @@ export default function sessionHeader(pi: ExtensionAPI): void {
 			}
 			if (promoteBranchTickets(probedLocation.branch)) paint(ctx);
 			const fingerprint = `${probedLocation.root}\u0000${probedLocation.branch}`;
-			if (inspectedBranches.has(fingerprint)) return;
-			inspectedBranches.add(fingerprint);
-			const url = await readBranchPullRequestUrl(probedLocation.root);
-			if (url && harvestPullRequestUrls(url, links, "active")) paint(ctx);
+			if (!inspectedBranches.has(fingerprint)) {
+				inspectedBranches.add(fingerprint);
+				const url = await readBranchPullRequestUrl(probedLocation.root);
+				if (url && harvestPullRequestUrls(url, links, "active")) paint(ctx);
+			}
+			if (await refreshPullRequestStates(probedLocation.root)) paint(ctx);
 		} finally {
 			repositoryProbeInFlight = false;
 		}
@@ -561,6 +687,8 @@ export default function sessionHeader(pi: ExtensionAPI): void {
 	const mount = (ctx: ExtensionContext): void => {
 		links.clear();
 		pullRequestActionRoles.clear();
+		trackerActionTickets.clear();
+		pullRequestStateCheckedAtMs.clear();
 		scannedEntryIds.clear();
 		inspectedBranches.clear();
 		probesByDirectory.clear();
