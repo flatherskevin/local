@@ -5,7 +5,7 @@
  * editor and the built-in status bar, so the bottom chrome reads:
  *
  *   row 1  session name (full, word-wrapped, never elided)
- *   row 2  pull requests and issue-tracker tickets this session acted on
+ *   row 2  pull requests and tickets, glyphed by what this session did to each
  *   row 3  the directory and branch work is landing in
  *   row 4  the built-in status bar (model, context, cost)
  *
@@ -15,6 +15,12 @@
  * resolves to a pull request; the directory comes from the `cwd` a shell
  * command ran in or the `path` an edit wrote to. Prose, prompts, and unrelated
  * tool output are never scanned, so discussing a ticket cannot fabricate a link.
+ *
+ * That same evidence assigns a role, which picks the glyph: `active` is the
+ * branch's own pull request and any ticket the branch is named after,
+ * `editing` is a call that changed the thing, `reviewing` is a diff or review,
+ * and `reference` is a plain read, shown muted. A link only ever moves up that
+ * list, so looking something up later cannot demote work already done.
  *
  * No issue tracker is hardcoded. `ISSUE_TRACKERS` below is a registry keyed by
  * name, and two environment variables — set in `~/.localrc`, since the tracker
@@ -62,8 +68,28 @@ const PATH_TOOLS: Record<string, true> = { read: true, write: true, fetch: true 
 const WORK_PATH_TOOLS: Record<string, true> = { write: true, edit: true };
 
 const PULL_REQUEST_COMMAND = /\bgh\b[^\n]{0,200}?\bpr\b/;
+/** The `gh pr <subcommand>` verb, which says what this session is doing with the pull request. */
+const PULL_REQUEST_SUBCOMMAND = /\bgh\b[^\n]{0,200}?\bpr\s+([a-z-]+)/;
 const PULL_REQUEST_API_PATH = /\/pulls(?:\/|\b)/;
 const PULL_REQUEST_RESOURCE = /^pr:\/\/\d/;
+/** A `pr://<n>/diff` read is reviewing; a bare `pr://<n>` read is only looking. */
+const PULL_REQUEST_DIFF_RESOURCE = /^pr:\/\/\d+\/diff/;
+/** Tracker tool verbs that change a ticket rather than read one. */
+const TRACKER_MUTATION = /create|save|update|edit|add|set|move|transition|assign|comment/i;
+
+const PULL_REQUEST_ROLES: Record<string, LinkRole> = {
+	create: "editing",
+	edit: "editing",
+	merge: "editing",
+	ready: "editing",
+	reopen: "editing",
+	close: "editing",
+	checkout: "editing",
+	review: "reviewing",
+	comment: "reviewing",
+	diff: "reviewing",
+	checks: "reviewing",
+};
 /** Any scheme-qualified target, which is never a filesystem directory. */
 const SCHEME_QUALIFIED = /^[a-z][a-z0-9+.-]*:\/\//i;
 /** A `cd <dir> && …` prefix, which omp itself treats as the command's working directory. */
@@ -157,11 +183,19 @@ function resolveIssueTracker(report: TrackerReporter): IssueTracker | undefined 
 
 type LinkKind = "pullRequest" | "ticket";
 
+/**
+ * What this session is doing with a link. A link only ever moves up this list,
+ * so one reference read cannot demote something already being edited.
+ */
+type LinkRole = "active" | "editing" | "reviewing" | "reference";
+
+const ROLE_RANK: Record<LinkRole, number> = { active: 0, editing: 1, reviewing: 2, reference: 3 };
+
 interface SessionLink {
 	kind: LinkKind;
+	role: LinkRole;
 	label: string;
 	url: string;
-	sortKey: string;
 }
 
 /** Where work is landing: the checkout root, its branch, and whether it is a linked worktree. */
@@ -181,9 +215,20 @@ interface LinkStyle {
 	icon: () => string;
 }
 
-const LINK_STYLES: Record<LinkKind, LinkStyle> = {
-	pullRequest: { color: "statusLineGitClean", icon: () => theme.icon.pr },
-	ticket: { color: "accent", icon: () => theme.icon.goal },
+/** One glyph per relationship, so the row reads at a glance instead of by label. */
+const LINK_STYLES: Record<LinkKind, Record<LinkRole, LinkStyle>> = {
+	pullRequest: {
+		active: { color: "statusLineGitClean", icon: () => theme.icon.pin },
+		editing: { color: "statusLineGitClean", icon: () => theme.icon.pr },
+		reviewing: { color: "statusLineContext", icon: () => theme.icon.advisor },
+		reference: { color: "muted", icon: () => theme.icon.file },
+	},
+	ticket: {
+		active: { color: "accent", icon: () => theme.icon.goal },
+		editing: { color: "accent", icon: () => theme.icon.plan },
+		reviewing: { color: "statusLineContext", icon: () => theme.icon.advisor },
+		reference: { color: "muted", icon: () => theme.icon.file },
+	},
 };
 
 /** Session managers notify on auto-title generation, but the callback is absent from the readonly view. */
@@ -211,32 +256,38 @@ function readArgument(args: unknown, field: string): string {
 	return typeof value === "string" ? value.slice(0, MAX_SCAN_CHARACTERS) : "";
 }
 
+/** Adds a link, or promotes one already present when fresh evidence outranks its role. */
 function rememberLink(links: Map<string, SessionLink>, link: SessionLink): boolean {
 	const key = link.kind === "ticket" ? `ticket:${link.label}` : `pullRequest:${link.url}`;
-	if (links.has(key)) return false;
-	links.set(key, link);
+	const existing = links.get(key);
+	if (!existing) {
+		links.set(key, link);
+		return true;
+	}
+	if (ROLE_RANK[link.role] >= ROLE_RANK[existing.role]) return false;
+	existing.role = link.role;
 	return true;
 }
 
 /** Tickets collapse on identifier so an argument field and a ticket URL stay one entry. */
-function rememberTicket(links: Map<string, SessionLink>, tracker: IssueTracker, identifier: string): boolean {
+function rememberTicket(
+	links: Map<string, SessionLink>,
+	tracker: IssueTracker,
+	identifier: string,
+	role: LinkRole,
+): boolean {
 	const ticket = identifier.toUpperCase();
-	return rememberLink(links, {
-		kind: "ticket",
-		label: ticket,
-		url: tracker.buildUrl(ticket),
-		sortKey: `1:${ticket}`,
-	});
+	return rememberLink(links, { kind: "ticket", role, label: ticket, url: tracker.buildUrl(ticket) });
 }
 
-function harvestPullRequestUrls(text: string, links: Map<string, SessionLink>): boolean {
+function harvestPullRequestUrls(text: string, links: Map<string, SessionLink>, role: LinkRole): boolean {
 	let added = false;
 	for (const [, host, owner, repository, number] of text.matchAll(PULL_REQUEST_URL)) {
 		const remembered = rememberLink(links, {
 			kind: "pullRequest",
+			role,
 			label: `${repository}#${number}`,
 			url: `https://${host}/${owner}/${repository}/pull/${number}`,
-			sortKey: `0:${repository}:${number!.padStart(8, "0")}`,
 		});
 		added = remembered || added;
 	}
@@ -248,15 +299,16 @@ function harvestTickets(
 	links: Map<string, SessionLink>,
 	tracker: IssueTracker | undefined,
 	includeFields: boolean,
+	role: LinkRole,
 ): boolean {
 	if (!tracker) return false;
 	let added = false;
 	for (const match of text.matchAll(tracker.urlPattern)) {
-		added = rememberTicket(links, tracker, match[1]!) || added;
+		added = rememberTicket(links, tracker, match[1]!, role) || added;
 	}
 	if (!includeFields) return added;
 	for (const match of text.matchAll(tracker.fieldPattern)) {
-		added = rememberTicket(links, tracker, match[1]!) || added;
+		added = rememberTicket(links, tracker, match[1]!, role) || added;
 	}
 	return added;
 }
@@ -268,17 +320,25 @@ function renderSessionRow(ctx: ExtensionContext): string {
 }
 
 function renderLink(link: SessionLink): string {
-	const style = LINK_STYLES[link.kind];
+	const style = LINK_STYLES[link.kind][link.role];
 	const label = theme.fg(style.color, `${style.icon()}${ICON_GLUE}${link.label}`);
 	return isHyperlinkEnabled() ? urlHyperlink(link.url, label) : `${label} ${theme.fg("muted", link.url)}`;
 }
 
+const KIND_RANK: Record<LinkKind, number> = { pullRequest: 0, ticket: 1 };
+
+/** Pull requests first, then tickets, and within each the most involved work leads. */
+function compareLinks(left: SessionLink, right: SessionLink): number {
+	return (
+		KIND_RANK[left.kind] - KIND_RANK[right.kind] ||
+		ROLE_RANK[left.role] - ROLE_RANK[right.role] ||
+		left.label.localeCompare(right.label)
+	);
+}
+
 function renderLinkRow(links: Map<string, SessionLink>): string | undefined {
 	if (links.size === 0) return undefined;
-	return Array.from(links.values())
-		.sort((left, right) => left.sortKey.localeCompare(right.sortKey))
-		.map(renderLink)
-		.join(LINK_SEPARATOR);
+	return Array.from(links.values()).sort(compareLinks).map(renderLink).join(LINK_SEPARATOR);
 }
 
 function renderLocationRow(location: RepositoryLocation): string {
@@ -307,7 +367,7 @@ function buildRows(
 export default function sessionHeader(pi: ExtensionAPI): void {
 	const tracker = resolveIssueTracker((message, context) => pi.logger.warn(message, context));
 	const links = new Map<string, SessionLink>();
-	const pullRequestActionIds = new Set<string>();
+	const pullRequestActionRoles = new Map<string, LinkRole>();
 	const scannedEntryIds = new Set<string>();
 	const inspectedBranches = new Set<string>();
 	const probesByDirectory = new Map<string, RepositoryProbe>();
@@ -335,23 +395,30 @@ export default function sessionHeader(pi: ExtensionAPI): void {
 			PULL_REQUEST_RESOURCE.test(resource) ||
 			(command !== "" && (PULL_REQUEST_COMMAND.test(command) || PULL_REQUEST_API_PATH.test(command)));
 		if (opensPullRequest) {
-			pullRequestActionIds.add(toolCallId);
-			added = harvestPullRequestUrls(command, links) || added;
-			added = harvestTickets(command, links, tracker, false) || added;
+			const subcommand = PULL_REQUEST_SUBCOMMAND.exec(command)?.[1] ?? "";
+			const role: LinkRole = PULL_REQUEST_DIFF_RESOURCE.test(resource)
+				? "reviewing"
+				: (PULL_REQUEST_ROLES[subcommand] ?? "reference");
+			pullRequestActionRoles.set(toolCallId, role);
+			added = harvestPullRequestUrls(command, links, role) || added;
+			added = harvestTickets(command, links, tracker, false, role) || added;
 		}
 
+		const ticketRole: LinkRole = TRACKER_MUTATION.test(toolName) ? "editing" : "reference";
 		if (tracker?.toolPattern.test(toolName)) {
-			added = harvestTickets(stringifyForScan(args), links, tracker, true) || added;
+			added = harvestTickets(stringifyForScan(args), links, tracker, true, ticketRole) || added;
 		} else if (tracker && MCP_DEVICE_RESOURCE.test(resource) && tracker.toolPattern.test(resource)) {
-			added = harvestTickets(readArgument(args, "content"), links, tracker, true) || added;
+			const deviceRole: LinkRole = TRACKER_MUTATION.test(resource) ? "editing" : "reference";
+			added = harvestTickets(readArgument(args, "content"), links, tracker, true, deviceRole) || added;
 		}
 		return added;
 	};
 
 	const ingestToolResult = (toolCallId: string, content: unknown): boolean => {
-		if (!pullRequestActionIds.has(toolCallId)) return false;
+		const role = pullRequestActionRoles.get(toolCallId);
+		if (!role) return false;
 		const resultText = stringifyForScan(content);
-		return resultText ? harvestPullRequestUrls(resultText, links) : false;
+		return resultText ? harvestPullRequestUrls(resultText, links, role) : false;
 	};
 
 	const ingestMessage = (message: unknown): boolean => {
@@ -422,6 +489,19 @@ export default function sessionHeader(pi: ExtensionAPI): void {
 		return added;
 	};
 
+	/** A branch named after a ticket is the strongest signal that it is the one being worked. */
+	const promoteBranchTickets = (branch: string): boolean => {
+		const haystack = branch.toUpperCase();
+		let promoted = false;
+		for (const link of links.values()) {
+			if (link.kind !== "ticket" || link.role === "active") continue;
+			if (!haystack.includes(link.label)) continue;
+			link.role = "active";
+			promoted = true;
+		}
+		return promoted;
+	};
+
 	/**
 	 * Resolve where work is landing, then look up that branch's pull request
 	 * once. Probes are memoized per directory and refreshed on an interval so a
@@ -449,11 +529,12 @@ export default function sessionHeader(pi: ExtensionAPI): void {
 				location = probedLocation;
 				paint(ctx);
 			}
+			if (promoteBranchTickets(probedLocation.branch)) paint(ctx);
 			const fingerprint = `${probedLocation.root}\u0000${probedLocation.branch}`;
 			if (inspectedBranches.has(fingerprint)) return;
 			inspectedBranches.add(fingerprint);
 			const url = await readBranchPullRequestUrl(probedLocation.root);
-			if (url && harvestPullRequestUrls(url, links)) paint(ctx);
+			if (url && harvestPullRequestUrls(url, links, "active")) paint(ctx);
 		} finally {
 			repositoryProbeInFlight = false;
 		}
@@ -479,7 +560,7 @@ export default function sessionHeader(pi: ExtensionAPI): void {
 
 	const mount = (ctx: ExtensionContext): void => {
 		links.clear();
-		pullRequestActionIds.clear();
+		pullRequestActionRoles.clear();
 		scannedEntryIds.clear();
 		inspectedBranches.clear();
 		probesByDirectory.clear();

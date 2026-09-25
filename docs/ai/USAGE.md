@@ -110,6 +110,13 @@ acted on, and the working directory with its branch, worktree aware. `core.yml`
 leaves the `path` and `git` status-line segments off because that row is now
 the extension's job, so treat the two files as a pair.
 
+Each link is glyphed by what the session did to it, so the row is scannable
+rather than uniform: the branch's own pull request and any ticket the branch is
+named after read as active, a call that changed something reads as editing, a
+diff or review reads as reviewing, and a plain lookup reads as a muted
+reference. A link only moves up that order, so reading something later never
+demotes work already done.
+
 Anything machine-specific stays untracked and is never committed:
 
 - `~/.config/omp/local.yml` for settings that override `core.yml`
