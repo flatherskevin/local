@@ -267,13 +267,13 @@ const LINK_STYLES: Record<LinkKind, Record<LinkRole, LinkStyle>> = {
 		active: { paint: themePaint("statusLineGitClean"), icon: () => theme.icon.pin },
 		editing: { paint: themePaint("statusLineGitClean"), icon: () => theme.icon.pr },
 		reviewing: { paint: themePaint("statusLineContext"), icon: () => theme.icon.advisor },
-		reference: { paint: themePaint("muted"), icon: () => theme.icon.file },
+		reference: { paint: themePaint("dim"), icon: () => theme.icon.file },
 	},
 	ticket: {
 		active: { paint: themePaint("accent"), icon: () => theme.icon.goal },
 		editing: { paint: themePaint("accent"), icon: () => theme.icon.plan },
 		reviewing: { paint: themePaint("statusLineContext"), icon: () => theme.icon.advisor },
-		reference: { paint: themePaint("muted"), icon: () => theme.icon.file },
+		reference: { paint: themePaint("dim"), icon: () => theme.icon.file },
 	},
 };
 
@@ -286,11 +286,15 @@ function presetGlyph(glyphs: Record<SymbolPreset, string>): () => string {
 	return () => glyphs[theme.getSymbolPreset()];
 }
 
-/** A settled or running state says more than the role, so it takes the glyph. */
+/**
+ * A settled or running state says more than the role, so it takes the glyph.
+ * The `nerd` glyphs are all monochrome outlines, so they take the colour beside
+ * them; the emoji kept for `unicode` draw their own colour and ignore it.
+ */
 const STATE_STYLES: Record<LinkState, LinkStyle> = {
 	building: {
 		paint: themePaint("warning"),
-		icon: presetGlyph({ nerd: "\u{1F3D7}\uFE0F", unicode: "\u{1F3D7}\uFE0F", ascii: "[build]" }),
+		icon: presetGlyph({ nerd: "\u{F0862}", unicode: "\u{1F3D7}\uFE0F", ascii: "[build]" }),
 	},
 	merged: {
 		paint: hexPaint(MERGED_PURPLE),
@@ -299,7 +303,7 @@ const STATE_STYLES: Record<LinkState, LinkStyle> = {
 	inReview: { paint: themePaint("statusLineContext"), icon: () => theme.icon.advisor },
 	done: {
 		paint: themePaint("success"),
-		icon: presetGlyph({ nerd: "\u2705", unicode: "\u2705", ascii: "[ok]" }),
+		icon: presetGlyph({ nerd: "\uebb3", unicode: "\u2705", ascii: "[ok]" }),
 	},
 };
 
