@@ -17,11 +17,16 @@ link_path "${REPO_ROOT}/config/tmux/tmux.conf" "${HOME}/.config/tmux/tmux.conf"
 link_path "${REPO_ROOT}/config/tmux/themes/moonfly.tmux" "${HOME}/.config/tmux/themes/moonfly.tmux"
 link_path "${REPO_ROOT}/config/zsh/zshrc" "${HOME}/.config/zsh/zshrc"
 link_path "${REPO_ROOT}/config/zsh/personal.zsh" "${HOME}/.config/zsh/personal.zsh"
+link_path "${REPO_ROOT}/config/omp/core.yml" "${HOME}/.config/omp/core.yml"
+link_path "${REPO_ROOT}/config/omp/extensions/session-header.ts" "${HOME}/.omp/agent/extensions/session-header.ts"
 link_path "${REPO_ROOT}/flatherskevin.zsh-theme" "${HOME}/.oh-my-zsh/custom/themes/flatherskevin.zsh-theme"
 
 link_path "${REPO_ROOT}/scripts/dev" "${HOME}/.local/bin/dev"
 link_path "${REPO_ROOT}/scripts/cheat" "${HOME}/.local/bin/cheat"
 link_path "${REPO_ROOT}/scripts/leaders" "${HOME}/.local/bin/leaders"
+
+seed_if_missing "${REPO_ROOT}/config/omp/local.example.yml" "${HOME}/.config/omp/local.yml"
+seed_if_missing "${REPO_ROOT}/config/omp/mcp.example.json" "${HOME}/.omp/agent/mcp.json"
 
 # shellcheck disable=SC2016
 append_line_once "${HOME}/.zshrc" '[[ -f "$HOME/.config/zsh/zshrc" ]] && source "$HOME/.config/zsh/zshrc"'

@@ -55,6 +55,20 @@ link_path() {
   log "Linked ${target_path} -> ${source_path}"
 }
 
+# Place a starting file the user then owns; an existing file is never disturbed.
+seed_if_missing() {
+  local source_path="$1"
+  local target_path="$2"
+
+  if [[ -e "$target_path" ]]; then
+    return 0
+  fi
+
+  ensure_dir "$(dirname "$target_path")"
+  cp "$source_path" "$target_path"
+  log "Seeded ${target_path}"
+}
+
 append_line_once() {
   local file_path="$1"
   local line="$2"

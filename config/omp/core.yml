@@ -1,0 +1,38 @@
+# Managed by github.com/flatherskevin/local
+# Core omp settings, applied as a config overlay ahead of ~/.config/omp/local.yml.
+# Machine-specific settings go in ~/.config/omp/local.yml, which wins over this file.
+
+modelRoles:
+  default: anthropic/claude-opus-5:xhigh
+
+theme:
+  dark: titanium
+  light: light
+
+# Nerd Font glyphs; the Brewfile installs the patched font this expects.
+symbolPreset: nerd
+
+composer:
+  shape: pi
+
+spelling:
+  autocomplete: false
+emojiAutocomplete: false
+
+dev:
+  autoqaConsent: denied
+
+# `path` and `git` are absent on purpose: extensions/session-header.ts renders a
+# worktree-aware directory and branch row instead, so keep the two files together.
+statusLine:
+  preset: custom
+  leftSegments:
+    - pi
+    - vim
+    - model
+    - mode
+    - collab
+    - stream
+    - context_pct
+    - cost
+  rightSegments: []

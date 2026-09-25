@@ -10,6 +10,7 @@ This repo used to be mostly shell setup. It now also contains:
 - Neovim config
 - kitty config
 - tmux config
+- agent config
 - bootstrap scripts
 - helper scripts
 - documentation

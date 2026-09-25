@@ -11,6 +11,7 @@ Understand the config file structure and make your first personal customizations
 - **`config/kitty/kitty.conf`** -- Kitty terminal configuration. Font, colors, window behavior.
 - **`config/zsh/zshrc`** -- shell aliases and functions. This is where `dev`, `v`, `lg`, `tl`, `ta`, `cheat`, and `keys` are defined.
 - **`config/zsh/personal.zsh`** -- optional personal extras for cloud, Python, Terraform, and Docker shortcuts.
+- **`config/omp/`** -- agent configuration. Tracked `core.yml` plus the session-header extension. Machine-local settings belong in `~/.config/omp/local.yml`.
 - **`Ctrl-a r`** -- reload tmux config without restarting.
 - **`source ~/.zshrc`** -- reload shell config to pick up new aliases.
 - **`:source %`** -- in Neovim, reload the current Lua file (useful when editing keymaps).

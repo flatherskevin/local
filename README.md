@@ -49,12 +49,14 @@ What you get:
 - the managed core config under `config/` is linked into place
 - the standard `dev`, `cheat`, and `leaders` scripts are linked into `~/.local/bin`
 - the default Neovim, tmux, Kitty, and zsh workflow is installed
+- the tracked `omp` agent layer under `config/omp/` is linked into place, including the session-header extension
 
 What you do not get unless you opt in:
 
 - AI CLI installation
 - the optional aliases/functions from `config/zsh/personal.zsh`
 - any user-specific overrides from `~/.localrc`
+- the machine-local `omp` layer: `~/.config/omp/local.yml`, MCP servers, skills, and agent instructions under `~/.omp/agent/`
 
 One important nuance: "base setup" here means the shared workflow defaults, not
 a minimal generic shell profile. The base zsh config is still opinionated and
