@@ -256,12 +256,21 @@ const LINK_STYLES: Record<LinkKind, Record<LinkRole, LinkStyle>> = {
 	},
 };
 
+/**
+ * Landing and building deserve glyphs that carry across a glance, which the
+ * theme's symbol sets do not offer, so these two supply their own. The ascii
+ * preset still gets a text form rather than an emoji it cannot draw.
+ */
+function stateGlyph(emoji: string, plain: string): () => string {
+	return () => (theme.getSymbolPreset() === "ascii" ? plain : emoji);
+}
+
 /** A settled or running state says more than the role, so it takes the glyph. */
 const STATE_STYLES: Record<LinkState, LinkStyle> = {
-	building: { color: "warning", icon: () => theme.status.running },
-	merged: { color: "success", icon: () => theme.icon.package },
+	building: { color: "warning", icon: stateGlyph("\u{1F3D7}\uFE0F", "[build]") },
+	merged: { color: "success", icon: stateGlyph("\u2705", "[ok]") },
 	inReview: { color: "statusLineContext", icon: () => theme.icon.advisor },
-	done: { color: "success", icon: () => theme.status.success },
+	done: { color: "success", icon: stateGlyph("\u2705", "[ok]") },
 };
 
 /** Maps a tracker's own workflow-state wording onto the two states worth a glyph. */
