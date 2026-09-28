@@ -238,7 +238,8 @@ section_marks_registers_macros() {
 
 section_shell() {
   header "Shell Aliases & Commands"
-  entry "dev"            "Open project picker / tmux session"
+  entry "dev"            "Open project picker / terminal grid session"
+  entry "dev --editor"   "Open project session with Neovim in the main pane"
   entry "dev install --local" "Install from this local clone"
   entry "dev session list" "List tmux sessions"
   entry "dev session kill -s" "Kill tmux session(s)"

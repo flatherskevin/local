@@ -9,15 +9,24 @@ for cmd in fd fzf tmux; do
   fi
 done
 
-# tmux tiles two panes as stacked rows, so two pane companions get laid out side by side.
-COMPANION_TWO_PANES='#{==:#{window_panes},2}'
-COMPANION_SIDE_BY_SIDE_LAYOUT='even-horizontal'
-COMPANION_GRID_LAYOUT='tiled'
+# tmux tiles two panes as stacked rows, so two pane windows get laid out side by side.
+TWO_PANES='#{==:#{window_panes},2}'
+SIDE_BY_SIDE_LAYOUT='even-horizontal'
+GRID_LAYOUT='tiled'
+
+DEFAULT_TERMINAL_COUNT=4
+
+# Which layout a session was built with, stored on the session so --refresh and
+# --restart can rebuild it without guessing.
+LAYOUT_OPTION='@dev_layout'
+EDITOR_LAYOUT='editor'
+TERMINAL_LAYOUT='terminal'
 
 usage() {
-  cat <<'EOF'
+  cat <<EOF
 Usage:
-  dev [path]                       Open the current Git repo, or pick a project directory
+  dev [path]                       Open a ${DEFAULT_TERMINAL_COUNT}-terminal grid for the current Git repo, or pick a project
+  dev [path] --editor              Open the project with the Neovim editor layout instead
   dev install --local              Install your real setup from the current local clone
   dev session list [--filter TEXT] List tmux sessions managed by dev/tmux
   dev session kill -s NAME...      Kill one or more tmux sessions by name
@@ -170,17 +179,59 @@ reload_nvim() {
   fi
 }
 
-apply_settings() {
+record_session_layout() {
+  local session="$1" layout="$2"
+  tmux set-option -t "$session" "$LAYOUT_OPTION" "$layout"
+}
+
+session_layout() {
+  local session="$1" layout
+  layout="$(tmux show-option -qv -t "$session" "$LAYOUT_OPTION" 2>/dev/null || true)"
+  printf '%s\n' "${layout:-$EDITOR_LAYOUT}"
+}
+
+apply_pane_layout() {
+  local window="$1"
+  tmux if-shell -t "$window" -F "$TWO_PANES" \
+    "select-layout -t '$window' $SIDE_BY_SIDE_LAYOUT" \
+    "select-layout -t '$window' $GRID_LAYOUT"
+}
+
+pane_layout_hook() {
+  printf "if -F '%s' 'select-layout %s' 'select-layout %s'" \
+    "$TWO_PANES" "$SIDE_BY_SIDE_LAYOUT" "$GRID_LAYOUT"
+}
+
+apply_editor_layout() {
   local session="$1"
-  tmux source-file ~/.config/tmux/tmux.conf
   tmux set-window-option -t "${session}:1" main-pane-width 66%
   tmux select-layout -t "${session}:1" main-vertical
   tmux set-hook -t "$session" window-resized "select-layout main-vertical"
 }
 
-create_session() {
+apply_terminal_layout() {
+  local session="$1"
+  apply_pane_layout "${session}:1"
+  tmux set-hook -t "$session" window-resized "$(pane_layout_hook)"
+}
+
+apply_settings() {
+  local session="$1"
+  tmux source-file ~/.config/tmux/tmux.conf
+  case "$(session_layout "$session")" in
+    "$TERMINAL_LAYOUT")
+      apply_terminal_layout "$session"
+      ;;
+    *)
+      apply_editor_layout "$session"
+      ;;
+  esac
+}
+
+create_editor_session() {
   local session="$1" project="$2"
   tmux new-session -d -s "$session" -c "$project"
+  record_session_layout "$session" "$EDITOR_LAYOUT"
   tmux split-window -h -c "$project" -t "${session}:1"
   tmux split-window -v -p 50 -c "$project" -t "${session}:1.2"
   apply_settings "$session"
@@ -188,30 +239,29 @@ create_session() {
   tmux select-pane -t "${session}:1.2"
 }
 
-apply_companion_layout() {
-  local window="$1"
-  tmux if-shell -t "$window" -F "$COMPANION_TWO_PANES" \
-    "select-layout -t '$window' $COMPANION_SIDE_BY_SIDE_LAYOUT" \
-    "select-layout -t '$window' $COMPANION_GRID_LAYOUT"
-}
-
-companion_layout_hook() {
-  printf "if -F '%s' 'select-layout %s' 'select-layout %s'" \
-    "$COMPANION_TWO_PANES" "$COMPANION_SIDE_BY_SIDE_LAYOUT" "$COMPANION_GRID_LAYOUT"
-}
-
-create_companion_session() {
+create_terminal_session() {
   local session="$1" project="$2" count="$3"
   local i
   tmux new-session -d -s "$session" -c "$project"
+  record_session_layout "$session" "$TERMINAL_LAYOUT"
   for ((i = 1; i < count; i++)); do
     tmux split-window -c "$project" -t "${session}:1"
-    apply_companion_layout "${session}:1"
+    apply_pane_layout "${session}:1"
   done
-  tmux source-file ~/.config/tmux/tmux.conf
-  apply_companion_layout "${session}:1"
-  tmux set-hook -t "$session" window-resized "$(companion_layout_hook)"
+  apply_settings "$session"
   tmux select-pane -t "${session}:1.1"
+}
+
+create_project_session() {
+  local session="$1" project="$2" layout="$3"
+  case "$layout" in
+    "$EDITOR_LAYOUT")
+      create_editor_session "$session" "$project"
+      ;;
+    *)
+      create_terminal_session "$session" "$project" "$DEFAULT_TERMINAL_COUNT"
+      ;;
+  esac
 }
 
 kitty_remote_available() {
@@ -289,7 +339,7 @@ open_companion_tab() {
 }
 
 dev_more_command() {
-  local parent="" count=4 force_new=0
+  local parent="" count="$DEFAULT_TERMINAL_COUNT" force_new=0
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -319,7 +369,7 @@ dev_more_command() {
         shift
         ;;
       -h|--help)
-        cat <<'EOF'
+        cat <<EOF
 Usage: dev more [--session NAME] [--count N] [--new]
 
 Open a new Kitty tab of terminals tied to a workstream (a "companion" session).
@@ -327,7 +377,7 @@ Open a new Kitty tab of terminals tied to a workstream (a "companion" session).
 Options:
   --session NAME  Parent session id (e.g. repo-56e811). Defaults to the current
                   tmux session when run inside one.
-  --count N       Number of terminal panes in the new tab (default 4).
+  --count N       Number of terminal panes in the new tab (default ${DEFAULT_TERMINAL_COUNT}).
   --new           Skip the resume picker and always create a fresh companion.
 EOF
         exit 0
@@ -375,7 +425,7 @@ EOF
 
   if [[ "$action" == "NEW" ]]; then
     target="$(companion_name "$parent" "$next_slot")"
-    create_companion_session "$target" "$project" "$count"
+    create_terminal_session "$target" "$project" "$count"
   else
     target="$action"
   fi
@@ -607,7 +657,7 @@ if [[ "${1:-}" == "--restart" ]]; then
   old_session="$(tmux display-message -p '#S')"
   session_name="$(session_name_for_project "$project")"
   temp_name="${session_name}-restarting"
-  create_session "$temp_name" "$project"
+  create_project_session "$temp_name" "$project" "$(session_layout "$old_session")"
   tmux switch-client -t "$temp_name"
   tmux kill-session -t "$old_session"
   tmux rename-session -t "$temp_name" "$session_name"
@@ -674,15 +724,36 @@ if [[ "${1:-}" == "--refresh" ]]; then
   exit 0
 fi
 
-if [[ -n "${1:-}" ]]; then
-  if [[ -d "$1/.git" ]]; then
-    project="$(cd "$1" && pwd)"
-  elif [[ -d "$1" ]]; then
-    project="$(cd "$1" && pwd)"
-  else
-    printf 'Path does not exist: %s\n' "$1" >&2
+use_editor=0
+project_arg=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --editor)
+      use_editor=1
+      shift
+      ;;
+    -*)
+      printf 'Unknown option for dev: %s\n' "$1" >&2
+      exit 1
+      ;;
+    *)
+      if [[ -n "$project_arg" ]]; then
+        printf 'dev: unexpected argument: %s\n' "$1" >&2
+        exit 1
+      fi
+      project_arg="$1"
+      shift
+      ;;
+  esac
+done
+
+if [[ -n "$project_arg" ]]; then
+  if [[ ! -d "$project_arg" ]]; then
+    printf 'Path does not exist: %s\n' "$project_arg" >&2
     exit 1
   fi
+  project="$(cd "$project_arg" && pwd)"
 else
   project="$(current_git_project)"
   if [[ -z "$project" ]]; then
@@ -697,8 +768,14 @@ fi
 project="${project%/}"
 session_name="$(session_name_for_project "$project")"
 
+if [[ "$use_editor" -eq 1 ]]; then
+  layout="$EDITOR_LAYOUT"
+else
+  layout="$TERMINAL_LAYOUT"
+fi
+
 if ! tmux has-session -t "$session_name" 2>/dev/null; then
-  create_session "$session_name" "$project"
+  create_project_session "$session_name" "$project" "$layout"
 fi
 
 if [[ -n "${TMUX:-}" ]]; then

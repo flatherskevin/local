@@ -69,29 +69,47 @@ check "session_list_command groups companions" "$group_expected" "$(session_list
 list_sessions() { printf '%s\n' "repo-56e811"; }
 check "next_companion_slot none used" "1" "$(next_companion_slot "repo-56e811")"
 
-# --- create_companion_session (tmux-backed; skipped without tmux) ---
+# --- session builders (tmux-backed; skipped without tmux) ---
 if command -v tmux >/dev/null 2>&1; then
+  wait_for_pane_command() {
+    local pane="$1" expected="$2" attempt actual=""
+    for ((attempt = 0; attempt < 50; attempt++)); do
+      actual="$(tmux display-message -p -t "$pane" '#{pane_current_command}' 2>/dev/null || true)"
+      [[ "$actual" == "$expected" ]] && break
+      sleep 0.1
+    done
+    printf '%s\n' "$actual"
+  }
+
   test_parent="devmoretest-$$"
   test_companion="${test_parent}+1"
   test_dir="$(mktemp -d)"
   # Ensure cleanup even on failure.
   trap 'tmux kill-session -t "$test_companion" 2>/dev/null || true; rm -rf "$test_dir"' EXIT
 
-  create_companion_session "$test_companion" "$test_dir" 4
+  create_terminal_session "$test_companion" "$test_dir" 4
 
   pane_count="$(tmux list-panes -t "${test_companion}:1" 2>/dev/null | wc -l | tr -d ' ')"
-  check "create_companion_session pane count" "4" "$pane_count"
+  check "create_terminal_session pane count" "4" "$pane_count"
 
   # A 4-pane tiled layout is always a 2x2 grid: two distinct column offsets and
   # two distinct row offsets. A wrong layout (e.g. main-vertical) would give 3 rows.
   distinct_left="$(tmux list-panes -t "${test_companion}:1" -F '#{pane_left}' 2>/dev/null | sort -u | wc -l | tr -d ' ')"
   distinct_top="$(tmux list-panes -t "${test_companion}:1" -F '#{pane_top}' 2>/dev/null | sort -u | wc -l | tr -d ' ')"
-  check "create_companion_session tiled 2x2 (2 columns)" "2" "$distinct_left"
-  check "create_companion_session tiled 2x2 (2 rows)" "2" "$distinct_top"
+  check "create_terminal_session tiled 2x2 (2 columns)" "2" "$distinct_left"
+  check "create_terminal_session tiled 2x2 (2 rows)" "2" "$distinct_top"
 
   first_pane_path="$(tmux display-message -p -t "${test_companion}:1.1" '#{pane_current_path}')"
   # macOS reports the mktemp dir through its /private symlink; normalize both sides.
-  check "create_companion_session cwd" "$(cd "$test_dir" && pwd -P)" "$(cd "$first_pane_path" && pwd -P)"
+  check "create_terminal_session cwd" "$(cd "$test_dir" && pwd -P)" "$(cd "$first_pane_path" && pwd -P)"
+  check "create_terminal_session records the terminal layout" \
+    "$TERMINAL_LAYOUT" "$(session_layout "$test_companion")"
+
+  # dev --refresh re-runs apply_settings, which must not drop the editor layout
+  # onto a session that was built as a terminal grid.
+  apply_settings "$test_companion"
+  refreshed_top="$(tmux list-panes -t "${test_companion}:1" -F '#{pane_top}' 2>/dev/null | sort -u | wc -l | tr -d ' ')"
+  check "apply_settings keeps a terminal session tiled" "2" "$refreshed_top"
 
   tmux kill-session -t "$test_companion" 2>/dev/null || true
   rm -rf "$test_dir"
@@ -101,20 +119,62 @@ if command -v tmux >/dev/null 2>&1; then
   test_dir_two="$(mktemp -d)"
   trap 'tmux kill-session -t "$test_two" 2>/dev/null || true; rm -rf "$test_dir_two"' EXIT
 
-  create_companion_session "$test_two" "$test_dir_two" 2
+  create_terminal_session "$test_two" "$test_dir_two" 2
 
   # tmux tiles two panes as stacked rows, so the two pane case must be forced side
   # by side: two distinct column offsets sharing a single row offset.
   two_left="$(tmux list-panes -t "${test_two}:1" -F '#{pane_left}' 2>/dev/null | sort -u | wc -l | tr -d ' ')"
   two_top="$(tmux list-panes -t "${test_two}:1" -F '#{pane_top}' 2>/dev/null | sort -u | wc -l | tr -d ' ')"
-  check "create_companion_session 2 panes side by side (2 columns)" "2" "$two_left"
-  check "create_companion_session 2 panes side by side (1 row)" "1" "$two_top"
+  check "create_terminal_session 2 panes side by side (2 columns)" "2" "$two_left"
+  check "create_terminal_session 2 panes side by side (1 row)" "1" "$two_top"
 
   tmux kill-session -t "$test_two" 2>/dev/null || true
   rm -rf "$test_dir_two"
   trap - EXIT
+
+  test_editor="deveditortest-$$"
+  test_dir_editor="$(mktemp -d)"
+  trap 'tmux kill-session -t "$test_editor" 2>/dev/null || true; rm -rf "$test_dir_editor"' EXIT
+
+  create_editor_session "$test_editor" "$test_dir_editor"
+
+  editor_panes="$(tmux list-panes -t "${test_editor}:1" 2>/dev/null | wc -l | tr -d ' ')"
+  check "create_editor_session pane count" "3" "$editor_panes"
+  check "create_editor_session records the editor layout" \
+    "$EDITOR_LAYOUT" "$(session_layout "$test_editor")"
+  # main-vertical gives the editor pane the whole left column, full window height.
+  check "create_editor_session editor pane spans the window height" \
+    "$(tmux display-message -p -t "${test_editor}:1" '#{window_height}')" \
+    "$(tmux display-message -p -t "${test_editor}:1.1" '#{pane_height}')"
+  check "create_editor_session starts nvim in the editor pane" \
+    "nvim" "$(wait_for_pane_command "${test_editor}:1.1" nvim)"
+
+  tmux kill-session -t "$test_editor" 2>/dev/null || true
+  rm -rf "$test_dir_editor"
+  trap - EXIT
+
+  test_default="devdefaulttest-$$"
+  test_unmarked="devunmarkedtest-$$"
+  test_dir_default="$(mktemp -d)"
+  trap 'for s in "$test_default" "$test_unmarked"; do tmux kill-session -t "$s" 2>/dev/null || true; done; rm -rf "$test_dir_default"' EXIT
+
+  create_project_session "$test_default" "$test_dir_default" "$TERMINAL_LAYOUT"
+  default_panes="$(tmux list-panes -t "${test_default}:1" 2>/dev/null | wc -l | tr -d ' ')"
+  check "create_project_session terminal layout uses the dev more default count" \
+    "$DEFAULT_TERMINAL_COUNT" "$default_panes"
+  check "create_project_session terminal layout starts no editor" "" \
+    "$(tmux list-panes -t "${test_default}:1" -F '#{pane_current_command}' 2>/dev/null | grep -x nvim || true)"
+
+  # Sessions created before the layout option existed must still refresh as editors.
+  tmux new-session -d -s "$test_unmarked" -c "$test_dir_default"
+  check "session_layout falls back to the editor layout" \
+    "$EDITOR_LAYOUT" "$(session_layout "$test_unmarked")"
+
+  for s in "$test_default" "$test_unmarked"; do tmux kill-session -t "$s" 2>/dev/null || true; done
+  rm -rf "$test_dir_default"
+  trap - EXIT
 else
-  printf '[skip] create_companion_session (tmux not available)\n'
+  printf '[skip] session builders (tmux not available)\n'
 fi
 
 # --- regression: `dev session kill` with parent AND companion listed together

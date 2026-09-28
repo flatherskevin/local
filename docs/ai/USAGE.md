@@ -40,6 +40,7 @@ Primary workflow commands:
 
 - `dev`
 - `dev /path/to/project`
+- `dev [path] --editor`
 - `dev session list [--filter TEXT]`
 - `dev session kill -s NAME...`
 - `dev more [--session NAME]`
@@ -63,9 +64,10 @@ Supporting aliases and helpers come from the managed zsh config:
 
 The expected working model is:
 
-- open a project with `dev`
+- open a project with `dev` for a grid of equally sized terminals
+- add `--editor` when the session should open with Neovim in the main pane
 - let `dev` create or attach the tmux session for that project
-- keep Neovim in the main pane and shell, tests, git, or AI tools in the others
+- keep shell, tests, git, or AI tools in the remaining panes
 - use Kitty tabs for multiple top-level sessions or repos
 
 Session naming is deterministic and derived from the project path, so similarly
@@ -84,6 +86,11 @@ resume a detached companion from its picker, `dev --count N` always opens a fres
 companion session with exactly N terminal panes. It opens the session in a new Kitty
 tab when remote control is available; otherwise, it prints the `tmux attach-session`
 command for the ready companion.
+
+A `dev` session without `--editor` and a `dev more` companion are built from the same
+layout: `dev more`'s default pane count, two panes side by side and anything more
+tiled. `--editor` instead reserves the main pane for Neovim, and `dev --refresh` and
+`dev --restart` rebuild whichever layout the session was created with.
 
 ## AI Tooling
 
