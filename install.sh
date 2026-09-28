@@ -17,8 +17,6 @@ cleanup() {
   fi
 }
 
-trap cleanup EXIT
-
 resolve_current_target() {
   if [[ -L "$INSTALL_DIR" ]]; then
     local target
@@ -37,10 +35,11 @@ resolve_current_target() {
 
 activate_release() {
   local release_path="$1"
-  local link_tmp="${INSTALL_DIR}.tmp"
 
-  ln -sfn "$release_path" "$link_tmp"
-  mv -f "$link_tmp" "$INSTALL_DIR"
+  # BSD mv follows a destination symlink that points at a directory, so a
+  # rename-into-place swap lands inside the old release instead of replacing
+  # the pointer. ln -sfn replaces the link itself on both BSD and GNU.
+  ln -sfn "$release_path" "$INSTALL_DIR"
 }
 
 cleanup_old_releases() {
@@ -74,6 +73,14 @@ migrate_legacy_install_dir() {
     CURRENT_TARGET="$migrated_path"
   fi
 }
+
+# When this file is sourced (e.g. by scripts/test-install.sh) rather than
+# executed, stop here so only the function definitions above are loaded.
+if [[ "${BASH_SOURCE[0]:-}" != "${0}" ]]; then
+  return 0
+fi
+
+trap cleanup EXIT
 
 printf '[local] install dir: %s\n' "$INSTALL_DIR"
 

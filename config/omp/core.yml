@@ -5,8 +5,10 @@
 modelRoles:
   default: anthropic/claude-opus-5:xhigh
 
+# `flatherskevin` is the tracked titanium fork in config/omp/themes; it exists so
+# typed input blocks do not share a surface color with tool blocks.
 theme:
-  dark: titanium
+  dark: flatherskevin
   light: light
 
 # Nerd Font glyphs; the Brewfile installs the patched font this expects.
