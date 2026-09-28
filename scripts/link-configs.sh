@@ -19,6 +19,7 @@ link_path "${REPO_ROOT}/config/zsh/zshrc" "${HOME}/.config/zsh/zshrc"
 link_path "${REPO_ROOT}/config/zsh/personal.zsh" "${HOME}/.config/zsh/personal.zsh"
 link_path "${REPO_ROOT}/config/omp/core.yml" "${HOME}/.config/omp/core.yml"
 link_path "${REPO_ROOT}/config/omp/extensions/session-header.ts" "${HOME}/.omp/agent/extensions/session-header.ts"
+link_path "${REPO_ROOT}/config/omp/themes/flatherskevin.json" "${HOME}/.omp/agent/themes/flatherskevin.json"
 link_path "${REPO_ROOT}/flatherskevin.zsh-theme" "${HOME}/.oh-my-zsh/custom/themes/flatherskevin.zsh-theme"
 
 link_path "${REPO_ROOT}/scripts/dev" "${HOME}/.local/bin/dev"
