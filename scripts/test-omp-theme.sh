@@ -63,7 +63,7 @@ check "every color token resolves through vars" "" "$unresolved"
 # The whole point of forking titanium: typed input must not share a surface with
 # tool blocks or the status line, which titanium renders in one shared color.
 user_bg="$(resolve userMessageBg)"
-check "user surface is a concrete color" "#12202c" "$user_bg"
+check "user surface is a concrete color" "#1a3347" "$user_bg"
 for token in toolPendingBg toolSuccessBg toolErrorBg statusLineBg customMessageBg; do
   other="$(resolve "$token")"
   if [[ "$other" == "$user_bg" ]]; then
