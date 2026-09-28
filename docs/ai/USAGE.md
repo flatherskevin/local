@@ -92,6 +92,23 @@ layout: `dev more`'s default pane count, two panes side by side and anything mor
 tiled. `--editor` instead reserves the main pane for Neovim, and `dev --refresh` and
 `dev --restart` rebuild whichever layout the session was created with.
 
+## Finding Your Own Input In An omp Transcript
+
+omp draws a user message block as a background fill with no border or rail, and
+titanium colors that fill the same as tool blocks and the status line. Three things
+address that, none of which can be a border, because the component exposes no such
+slot:
+
+- `config/omp/themes/flatherskevin.json` is a titanium fork whose only changes are
+  `userMessageBg` (its own surface, distinct from every tool and status surface) and
+  `userMessageText` (brighter than tool output). `core.yml` selects it.
+- `config/omp/APPEND_SYSTEM.md` makes every reply lead with a person emoji. omp
+  strips that emoji from the reply and renders it as a badge on the block it answers,
+  which is the one decoration slot a user block has.
+- `prefix P` opens tmux copy mode on the last block typed, and `[` / `]` walk the
+  rest, using the OSC 133 marks omp writes around each one. Outside tmux, Kitty's own
+  `kitty_mod+z` / `kitty_mod+x` do the same against its scrollback.
+
 ## AI Tooling
 
 AI CLIs are optional, not required for a healthy install.
