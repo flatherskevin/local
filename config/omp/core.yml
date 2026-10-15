@@ -3,7 +3,7 @@
 # Machine-specific settings go in ~/.config/omp/local.yml, which wins over this file.
 
 modelRoles:
-  default: anthropic/claude-opus-5:xhigh
+  default: anthropic/claude-opus-5-5:xhigh
 
 # `flatherskevin` is the tracked titanium fork in config/omp/themes; it exists so
 # typed input blocks do not share a surface color with tool blocks.
