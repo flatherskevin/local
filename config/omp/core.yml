@@ -23,6 +23,8 @@ startup:
 display:
   hideToolActivity: true
 
+hideThinkingBlock: true
+
 spelling:
   autocomplete: false
 emojiAutocomplete: false
