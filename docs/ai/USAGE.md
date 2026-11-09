@@ -128,6 +128,11 @@ managed half into place and overwrites it on every run:
 - `config/omp/extensions/session-header.ts` links to
   `~/.omp/agent/extensions/session-header.ts`
 
+The managed defaults keep OMP quiet at the two points that otherwise add the
+most transcript noise: startup status messages are suppressed, and
+model-initiated tool calls and results are hidden. Assistant responses remain
+visible; use the TODO list as the progress view and the OMP logs when detailed
+diagnostics are needed.
 The extension draws three rows above the built-in status bar: the full session
 name, clickable links to the pull requests and tickets the session actually
 acted on, and the working directory with its branch, worktree aware. `core.yml`
