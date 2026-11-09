@@ -25,6 +25,9 @@ display:
 
 hideThinkingBlock: true
 
+tui:
+  resizeScrollback: preserve
+
 spelling:
   autocomplete: false
 emojiAutocomplete: false
