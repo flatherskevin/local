@@ -17,6 +17,17 @@ symbolPreset: nerd
 composer:
   shape: pi
 
+startup:
+  quiet: true
+
+display:
+  hideToolActivity: true
+
+hideThinkingBlock: true
+
+tui:
+  resizeScrollback: preserve
+
 spelling:
   autocomplete: false
 emojiAutocomplete: false
